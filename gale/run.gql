@@ -1,0 +1,15 @@
+{
+    gale {
+        repo(name: "aweris/gale") {
+            withWorkflowsDir(dir: "ci/workflows"){
+                workflow(name: "ci/workflows/lint.yaml") {
+                    withJob(name: "golangci-lint") {
+                        withDebug{
+                            run(token: "'"$GITHUB_TOKEN"'")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
