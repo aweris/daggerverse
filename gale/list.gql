@@ -1,9 +1,0 @@
-{
-    gale {
-        repo(name: "aweris/gale") {
-            withWorkflowsDir(dir: "ci/workflows"){
-                list(token: "'"$GITHUB_TOKEN"'")
-            }
-        }
-    }
-}
