@@ -3721,6 +3721,84 @@ func main() {
 
 func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (any, error) {
 	switch parentName {
+	case "Workflow":
+		switch fnName {
+		case "Run":
+			var err error
+			var parent Workflow
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			var token string
+			err = json.Unmarshal([]byte(inputArgs["token"]), &token)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			return (*Workflow).Run(&parent, ctx, token)
+		case "WithDebug":
+			var err error
+			var parent Workflow
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			return (*Workflow).WithDebug(&parent, ctx)
+		case "WithJob":
+			var err error
+			var parent Workflow
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			var name string
+			err = json.Unmarshal([]byte(inputArgs["name"]), &name)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			return (*Workflow).WithJob(&parent, ctx, name)
+		default:
+			return nil, fmt.Errorf("unknown function %s", fnName)
+		}
+	case "Gale":
+		switch fnName {
+		case "Repo":
+			var err error
+			var parent Gale
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			var name string
+			err = json.Unmarshal([]byte(inputArgs["name"]), &name)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			return (*Gale).Repo(&parent, ctx, name)
+		case "":
+			var err error
+			var typeDefBytes []byte = []byte("{\"asObject\":{\"functions\":[{\"args\":[{\"name\":\"name\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"Repo returns a Repo with the given name.\\n\",\"name\":\"Repo\",\"returnType\":{\"asObject\":{\"fields\":[{\"name\":\"RepoName\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"WorkflowsDir\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Branch\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Tag\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"functions\":[{\"args\":[{\"name\":\"token\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"List lists the workflows in the repository.\\n\",\"name\":\"List\",\"returnType\":{\"kind\":\"StringKind\"}},{\"args\":[{\"name\":\"branch\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"WithBranch sets the branch to use for the repository. If not set, the default is the default branch of the repository.\\n\",\"name\":\"WithBranch\",\"returnType\":{\"asObject\":{\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"tag\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"WithTag sets the tag to use for the repository. If not set, the default is the default branch of the repository.\\n\",\"name\":\"WithTag\",\"returnType\":{\"asObject\":{\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"dir\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"WithWorkflowsDir sets the workflows directory. If not set, the default is \\\".github/workflows\\\".\\n\",\"name\":\"WithWorkflowsDir\",\"returnType\":{\"asObject\":{\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"name\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"Workflow returns a Workflow with the given name.\\n\",\"name\":\"Workflow\",\"returnType\":{\"asObject\":{\"fields\":[{\"name\":\"RepoName\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"WorkflowsDir\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Branch\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Tag\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"WorkflowName\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Job\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Debug\",\"typeDef\":{\"kind\":\"BooleanKind\"}}],\"functions\":[{\"args\":[{\"name\":\"token\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"Run runs the workflow.\\n\",\"name\":\"Run\",\"returnType\":{\"kind\":\"StringKind\"}},{\"description\":\"WithDebug sets the debug mode. If not set, the default is false.\\n\",\"name\":\"WithDebug\",\"returnType\":{\"asObject\":{\"name\":\"Workflow\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"name\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"description\":\"WithJob sets the job to run. If not set, the default is running all jobs in the workflow.\\n\",\"name\":\"WithJob\",\"returnType\":{\"asObject\":{\"name\":\"Workflow\"},\"kind\":\"ObjectKind\"}}],\"name\":\"Workflow\"},\"kind\":\"ObjectKind\"}}],\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}}],\"name\":\"Gale\"},\"kind\":\"ObjectKind\"}")
+			var typeDef TypeDefInput
+			err = json.Unmarshal(typeDefBytes, &typeDef)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
+			mod := dag.CurrentModule()
+			for _, fnDef := range typeDef.AsObject.Functions {
+				mod = mod.WithFunction(dag.NewFunction(fnDef))
+			}
+			return mod, nil
+		default:
+			return nil, fmt.Errorf("unknown function %s", fnName)
+		}
 	case "Repo":
 		switch fnName {
 		case "List":
@@ -3798,84 +3876,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				os.Exit(2)
 			}
 			return (*Repo).Workflow(&parent, ctx, name)
-		default:
-			return nil, fmt.Errorf("unknown function %s", fnName)
-		}
-	case "Workflow":
-		switch fnName {
-		case "Run":
-			var err error
-			var parent Workflow
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			var token string
-			err = json.Unmarshal([]byte(inputArgs["token"]), &token)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			return (*Workflow).Run(&parent, ctx, token)
-		case "WithDebug":
-			var err error
-			var parent Workflow
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			return (*Workflow).WithDebug(&parent, ctx)
-		case "WithJob":
-			var err error
-			var parent Workflow
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			var name string
-			err = json.Unmarshal([]byte(inputArgs["name"]), &name)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			return (*Workflow).WithJob(&parent, ctx, name)
-		default:
-			return nil, fmt.Errorf("unknown function %s", fnName)
-		}
-	case "Gale":
-		switch fnName {
-		case "Repo":
-			var err error
-			var parent Gale
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			var name string
-			err = json.Unmarshal([]byte(inputArgs["name"]), &name)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			return (*Gale).Repo(&parent, ctx, name)
-		case "":
-			var err error
-			var typeDefBytes []byte = []byte("{\"asObject\":{\"functions\":[{\"args\":[{\"name\":\"name\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"Repo\",\"returnType\":{\"asObject\":{\"fields\":[{\"name\":\"RepoName\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"WorkflowsDir\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Branch\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Tag\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"functions\":[{\"args\":[{\"name\":\"token\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"List\",\"returnType\":{\"kind\":\"StringKind\"}},{\"args\":[{\"name\":\"branch\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"WithBranch\",\"returnType\":{\"asObject\":{\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"tag\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"WithTag\",\"returnType\":{\"asObject\":{\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"dir\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"WithWorkflowsDir\",\"returnType\":{\"asObject\":{\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"name\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"Workflow\",\"returnType\":{\"asObject\":{\"fields\":[{\"name\":\"RepoName\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"WorkflowsDir\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Branch\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Tag\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"WorkflowName\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Job\",\"typeDef\":{\"kind\":\"StringKind\"}},{\"name\":\"Debug\",\"typeDef\":{\"kind\":\"BooleanKind\"}}],\"functions\":[{\"args\":[{\"name\":\"token\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"Run\",\"returnType\":{\"kind\":\"StringKind\"}},{\"name\":\"WithDebug\",\"returnType\":{\"asObject\":{\"name\":\"Workflow\"},\"kind\":\"ObjectKind\"}},{\"args\":[{\"name\":\"name\",\"typeDef\":{\"kind\":\"StringKind\"}}],\"name\":\"WithJob\",\"returnType\":{\"asObject\":{\"name\":\"Workflow\"},\"kind\":\"ObjectKind\"}}],\"name\":\"Workflow\"},\"kind\":\"ObjectKind\"}}],\"name\":\"Repo\"},\"kind\":\"ObjectKind\"}}],\"name\":\"Gale\"},\"kind\":\"ObjectKind\"}")
-			var typeDef TypeDefInput
-			err = json.Unmarshal(typeDefBytes, &typeDef)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(2)
-			}
-			mod := dag.CurrentModule()
-			for _, fnDef := range typeDef.AsObject.Functions {
-				mod = mod.WithFunction(dag.NewFunction(fnDef))
-			}
-			return mod, nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
