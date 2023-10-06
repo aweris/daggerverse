@@ -1,0 +1,3 @@
+query help { kind { exec(args: []) { stdout } } }
+
+query get_clusters { kind { exec(args: ["get", "clusters"]) { stdout } } }
