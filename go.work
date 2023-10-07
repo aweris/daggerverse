@@ -1,0 +1,9 @@
+go 1.21.2
+
+use (
+	./gale
+	./gh
+	./helm
+	./kind
+	./kubectl
+)
