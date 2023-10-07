@@ -11,8 +11,9 @@ For a quick start, run the following command to create a KinD cluster named `my-
 echo '{
     kind {
         cluster (name: "my-cluster") {
-            create,
-            kubeconfig (internal: false) { export(path: "./config") }
+            create { 
+              kubeconfig (internal: false) { export(path: "./config") }
+            }
         }
     }
 }' | dagger query -m github.com/aweris/daggerverse/kind --progress=plain
