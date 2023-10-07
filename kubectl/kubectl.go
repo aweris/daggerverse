@@ -7,25 +7,19 @@ import (
 )
 
 // Kubectl represents the kubectl module for Dagger.
-type Kubectl struct {
+type Kubectl struct{}
+
+// Cli returns a kubectl cli with the given config.
+func (m *Kubectl) Cli(config *File) *Cli {
+	return &Cli{Config: config}
+}
+
+type Cli struct {
 	Config *File
 }
 
-// WithConfig sets the kubectl config to use.
-func (m *Kubectl) WithConfig(config *File) *Kubectl {
-	m.Config = config
-	return m
-}
-
-// WithRawConfig sets the kubectl config to use with the given contents.
-func (m *Kubectl) WithRawConfig(contents string) *Kubectl {
-	m.Config = dag.Directory().WithNewFile("config", contents).File("config")
-
-	return m
-}
-
 // Exec executes the given kubectl command and returns the stdout.
-func (m *Kubectl) Exec(ctx context.Context, args []string) (string, error) {
+func (m *Cli) Exec(ctx context.Context, args []string) (string, error) {
 	if m.Config == nil {
 		return "", fmt.Errorf("please provide a kubectl config")
 	}
@@ -34,7 +28,7 @@ func (m *Kubectl) Exec(ctx context.Context, args []string) (string, error) {
 }
 
 // Container returns a container with the kubectl image and given config. The entrypoint is set to kubectl.
-func (m *Kubectl) Container(_ context.Context) (*Container, error) {
+func (m *Cli) Container(_ context.Context) (*Container, error) {
 	if m.Config == nil {
 		return nil, fmt.Errorf("please provide a kubectl config")
 	}
@@ -43,7 +37,7 @@ func (m *Kubectl) Container(_ context.Context) (*Container, error) {
 }
 
 // container returns a container with the kubectl image.
-func (m *Kubectl) container() *Container {
+func (m *Cli) container() *Container {
 	return dag.Container().
 		From("bitnami/kubectl:latest").
 		WithUser("root").

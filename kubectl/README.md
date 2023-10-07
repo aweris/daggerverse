@@ -23,7 +23,7 @@ fileID=$(echo $config | jq -r '.kind.cluster.create.kubeconfig.id')
 
 echo '{
     kubectl {
-        withConfig(config:"'$fileID'") {
+        cli(config:"'$fileID'") {
           exec (args: ["get", "pods", "-A", "-o", "json"])
         }
     }
@@ -56,7 +56,7 @@ namespace="my-namespace-$(date +%s)"
 
 echo '{
     kubectl {
-        withConfig(config:"'$fileID'") {
+        cli(config:"'$fileID'") {
           container {
             withExec(args: ["create", "namespace", "'$namespace'"]) {
               withExec(args: ["get", "namespaces"]) {
