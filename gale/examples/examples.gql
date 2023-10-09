@@ -1,25 +1,20 @@
 query list {
     gale {
-        repo(name: "aweris/gale") {
-            withWorkflowsDir(dir: "ci/workflows"){
-                list(token: "$GITHUB_TOKEN")
-            }
-        }
+        list (
+            token: "$GITHUB_TOKEN",
+            repo: "aweris/gale"
+        )
     }
 }
 
 query run {
     gale {
-        repo(name: "aweris/gale") {
-            withWorkflowsDir(dir: "ci/workflows"){
-                workflow(name: "ci/workflows/lint.yaml") {
-                    withJob(name: "golangci-lint") {
-                        withDebug{
-                            run(token: "$GITHUB_TOKEN")
-                        }
-                    }
-                }
-            }
-        }
+        run(
+            workflow: "ci/workflows/artifact-cache.yaml",
+            token: "$GITHUB_TOKEN",
+            repo: "aweris/gale",
+            workflowsDir: "ci/workflows",
+            debug: true
+        )
     }
 }
