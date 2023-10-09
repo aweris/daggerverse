@@ -16,11 +16,11 @@ export GITHUB_TOKEN=<super-secret-token>
 ### List workflows
 
 ```bash
-dagger query --progress=plain list < <(sed "s/\$GITHUB_TOKEN/$GITHUB_TOKEN/g" examples.gql)
+dagger query --progress=plain list < <(sed "s/\$GITHUB_TOKEN/$GITHUB_TOKEN/g" examples/examples.gql)
 ```
 
 ### Run workflow
 
 ```bash
-dagger query --progress=plain run < <(sed "s/\$GITHUB_TOKEN/$GITHUB_TOKEN/g" examples.gql)
+dagger query --progress=plain run < <(sed "s/\$GITHUB_TOKEN/$GITHUB_TOKEN/g" examples/examples.gql)
 ```
