@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.39
 	github.com/Khan/genqlient v0.6.0
 	github.com/hashicorp/go-getter v1.7.2
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sync v0.4.0
 )
 
