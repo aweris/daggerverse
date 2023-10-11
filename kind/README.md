@@ -2,13 +2,15 @@
 
 Manage KinD clusters using Dagger.
 
-## Quick Start: 
+## Examples
 
-For a quick start, run the following command to create a KinD cluster named `my-cluster` and export its kubeconfig to
-`./config` file:
- 
-```bash
-echo '{
+### Create a KinD cluster and Export Kubeconfig
+
+The following query will create a KinD cluster named `my-cluster` and export its kubeconfig to `./config` file:
+
+```shell
+dagger query -m github.com/aweris/daggerverse/kind --progress=plain <<EOF
+{
     kind {
         cluster (name: "my-cluster") {
             create { 
@@ -16,25 +18,26 @@ echo '{
             }
         }
     }
-}' | dagger query -m github.com/aweris/daggerverse/kind --progress=plain
+}
+EOF
 ```
 
-or run individual kind cli commands:
+### Run KinD Cli directly to create a cluster and export kubeconfig 
 
-```bash
-echo '{
-    kind { 
-        exec (args: ["create", "cluster", "--name", "my-cluster"]) { stdout }
-        
-        exec (args: ["export", "kubeconfig", "--name", "my-cluster"]) {
-            file(path: "/root/.kube/config") {  export(path: "./kubeconfig") }
-        }
+The following query will execute `kind` cli directly with given arguments and calls `stdout` function from the returned
+container to get the output:
+
+```shell
+dagger query -m github.com/aweris/daggerverse/kind --progress=plain <<EOF
+{
+    kind {
+            exec (args: ["get", "clusters"]) {
+                 stdout
+            }
     }
-}' | dagger query -m github.com/aweris/daggerverse/kind --progress=plain
+}
+EOF
 ```
-
-The above command will run `kind` command given in the `args` field and return dagger container executed that command. 
-With `stdout` field, we are asking dagger to return the stdout of the command.
 
 ## Limitations
 
