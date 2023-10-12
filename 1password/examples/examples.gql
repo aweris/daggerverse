@@ -1,0 +1,19 @@
+query read {
+    onepassword {
+        auth(token: "$OP_SERVICE_ACCOUNT_TOKEN") {
+            read(ref: "op://test/test/password")
+        }
+    }
+}
+
+query container {
+    container {
+        from(address: "alpine:latest") {
+            with1PasswordSecret(token: "$OP_SERVICE_ACCOUNT_TOKEN", ref: "op://test/test/password", name: "SUPER_SECRET_PASSWORD") {
+               withExec(args: ["ash", "-c", "[[ -z \"$SUPER_SECRET_PASSWORD\" ]] && echo \"SUPER_SECRET_PASSWORD is empty\" || echo \"SUPER_SECRET_PASSWORD is set\""]) {
+                   stdout
+               }
+            }
+        }
+    }
+}
