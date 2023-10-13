@@ -1,20 +1,41 @@
 query list {
     gale {
-        list (
-            token: "$GITHUB_TOKEN",
-            repo: "aweris/gale"
-        )
+        setToken(token: "$GITHUB_TOKEN") {
+            repo(repo: "aweris/gale") {
+               workflows(workflowsDir: "ci/workflows") {
+                   list
+               }
+            }
+        }
     }
 }
 
-query run {
+query run_result {
     gale {
-        run(
-            workflow: "ci/workflows/artifact-cache.yaml",
-            token: "$GITHUB_TOKEN",
-            repo: "aweris/gale",
-            workflowsDir: "ci/workflows",
-            debug: true
-        )
+        setToken(token: "$GITHUB_TOKEN") {
+            repo(repo: "aweris/gale") {
+                workflows(workflowsDir: "ci/workflows") {
+                    run(workflow: "step", job: "run") {
+                        result
+                    }
+                }
+            }
+        }
+    }
+}
+
+query run_export {
+    gale {
+        setToken(token: "$GITHUB_TOKEN") {
+            repo(repo: "aweris/gale") {
+                workflows(workflowsDir: "ci/workflows") {
+                    run(workflow: "step", job: "run") {
+                        directory(includeSource: true) {
+                            export(path: ".gale")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
