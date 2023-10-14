@@ -3,28 +3,37 @@ package main
 import "context"
 
 // Docker represents the Docker module for Dagger.
-type Docker struct {
-	CacheVolume *CacheVolume
+type Docker struct{}
+
+// DockerServiceOpts represents the options for binding the Docker module as a service.
+type DockerServiceOpts struct {
+	CacheVolume *CacheVolume `doc:"The volume to use for caching the Docker data. If not provided, the data is not cached."`
 }
 
-// WithCacheVolume sets the cache volume with the given name to be mounted to /var/lib/docker in the service container.
-func (m *Docker) WithCacheVolume(name string) *Docker {
-	m.CacheVolume = dag.CacheVolume(name)
-	return m
-}
-
-// Service returns the Docker service. Set DOCKER_HOST to the service endpoint to use it.
-func (m *Docker) Service(_ context.Context) *Service {
-	container := dag.Container().
+// BindAsService binds the Docker module as a service to given container.
+func (m *Docker) BindAsService(ctx context.Context, container *Container, opts DockerServiceOpts) (*Container, error) {
+	dind := dag.Container().
 		From("docker:dind").
 		WithUser("root").
 		WithEnvVariable("DOCKER_TLS_CERTDIR", ""). // disable TLS
 		WithExec([]string{"-H", "tcp://0.0.0.0:2375"}, ContainerWithExecOpts{InsecureRootCapabilities: true}).
 		WithExposedPort(2375)
 
-	if m.CacheVolume != nil {
-		container = container.WithMountedCache("/var/lib/docker", m.CacheVolume)
+	// If a cache volume is provided, we'll mount it /var/lib/docker.
+	if opts.CacheVolume != nil {
+		container = container.WithMountedCache("/var/lib/docker", opts.CacheVolume)
 	}
 
-	return container.Service()
+	// convert the container to a service.
+	service := dind.AsService()
+
+	// get the endpoint of the service to set the DOCKER_HOST environment variable. The reason we're not using the
+	// alias for docker is because the service alias is not available in the child containers of the container.
+	endpoint, err := service.Endpoint(ctx, ServiceEndpointOpts{Scheme: "tcp"})
+	if err != nil {
+		return nil, err
+	}
+
+	// bind the service to the container and set the DOCKER_HOST environment variable.
+	return container.WithServiceBinding("docker", service).WithEnvVariable("DOCKER_HOST", endpoint), nil
 }
