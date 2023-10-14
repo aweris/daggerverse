@@ -1,0 +1,19 @@
+query runner {
+    gale {
+      runner {
+          from(address: "ghcr.io/aweris/gale/runner/ubuntu:22.04") {
+              withRepo(repo: "kubernetes/minikube") {
+                  withGithub(token: "$GITHUB_TOKEN") {
+                      withEvent(eventName: "push") {
+                          container {
+                              withExec(args: ["/usr/local/bin/ghx", "run", "build", "--job", "build_minikube"], experimentalPrivilegedNesting:true) {
+                                  stdout
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+    }
+}

@@ -10,10 +10,10 @@ query list {
 query run {
     gale {
         run(
-            workflow: "ci/workflows/artifact-cache.yaml",
+            workflow: "Master",
             token: "$GITHUB_TOKEN",
-            repo: "aweris/gale",
-            workflowsDir: "ci/workflows",
+            repo: "kubernetes/minikube",
+            job: "lint"
             debug: true
         )
     }

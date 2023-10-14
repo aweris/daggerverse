@@ -15,21 +15,21 @@ type Repo struct {
 type GithubRepository struct {
 	ID               string                    `json:"id"`
 	Name             string                    `json:"name"`
-	NameWithOwner    string                    `json:"name_with_owner"`
+	NameWithOwner    string                    `json:"nameWithOwner"`
 	URL              string                    `json:"url" `
 	Owner            GithubRepositoryOwner     `json:"owner"`
-	DefaultBranchRef GithubRepositoryBranchRef `json:"default_branch_ref"`
+	DefaultBranchRef GithubRepositoryBranchRef `json:"defaultBranchRef"`
 }
 
 // GithubRepositoryOwner represents a GitHub repository owner
 type GithubRepositoryOwner struct {
-	ID    string `json:"id" env:"GALE_REPO_OWNER_ID" container_env:"true"`
-	Login string `json:"login" env:"GALE_REPO_OWNER_LOGIN" container_env:"true"`
+	ID    string `json:"id"`
+	Login string `json:"login"`
 }
 
 // GithubRepositoryBranchRef represents a GitHub repository branch ref
 type GithubRepositoryBranchRef struct {
-	Name string `json:"name" env:"GALE_REPO_BRANCH_NAME" container_env:"true"`
+	Name string `json:"name"`
 }
 
 func (r *Runner) loadRepo(ctx context.Context) (*Repo, error) {

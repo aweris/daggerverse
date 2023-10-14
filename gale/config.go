@@ -48,3 +48,22 @@ type EventOpts struct {
 	EventName string `doc:"Name of the event that triggered the workflow. e.g. push"`
 	EventFile *File  `doc:"The file with the complete webhook event payload."`
 }
+
+// FIXME: dagger currently fails if struct doesn't have any method. These methods are added to make sure that the
+//  struct has at least one method. This behavior hopefully changes in the future.
+
+func (_ *Config) Noop() string {
+	return ""
+}
+
+func (_ *GithubOpts) Noop() string {
+	return ""
+}
+
+func (_ *RepoOpts) Noop() string {
+	return ""
+}
+
+func (_ *EventOpts) Noop() string {
+	return ""
+}
