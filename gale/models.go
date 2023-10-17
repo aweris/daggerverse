@@ -21,7 +21,7 @@ type WorkflowRunOpts struct {
 	Job         string `doc:"The job name to run. If empty, all jobs will be run."`
 	EventName   string `doc:"Name of the event that triggered the workflow. e.g. push"`
 	EventFile   *File  `doc:"The file with the complete webhook event payload."`
-	RunnerImage string `doc:"The image to use for the runner." default:"ghcr.io/aweris/gale/runner/ubuntu:22.04"`
+	RunnerImage string `doc:"The image to use for the runner." default:"ghcr.io/catthehacker/ubuntu:act-latest"`
 }
 
 // WorkflowRunDirectoryOpts represents the options for exporting a workflow run.
