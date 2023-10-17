@@ -11,7 +11,7 @@ require (
 
 require (
 	github.com/google/uuid v1.3.1 // indirect
-	github.com/sosodev/duration v1.1.0 // indirect
+	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.10 // indirect
 )
