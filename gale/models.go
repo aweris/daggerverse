@@ -22,15 +22,17 @@ type WorkflowRunOpts struct {
 	EventName   string `doc:"Name of the event that triggered the workflow. e.g. push"`
 	EventFile   *File  `doc:"The file with the complete webhook event payload."`
 	RunnerImage string `doc:"The image to use for the runner." default:"ghcr.io/catthehacker/ubuntu:act-latest"`
+	Debug       bool   `doc:"Enable debug mode." default:"false"`
 }
 
 // WorkflowRunDirectoryOpts represents the options for exporting a workflow run.
 type WorkflowRunDirectoryOpts struct {
-	IncludeRepo     bool `doc:"Include the repository source in the exported directory." default:"false"`
-	IncludeMetadata bool `doc:"Include the workflow run metadata in the exported directory." default:"false"`
-	IncludeSecrets  bool `doc:"Include the secrets in the exported directory." default:"false"`
-	IncludeEvent    bool `doc:"Include the event file in the exported directory." default:"false"`
-	IncludeActions  bool `doc:"Include the custom action repo in the exported directory." default:"false"`
+	IncludeRepo      bool `doc:"Include the repository source in the exported directory." default:"false"`
+	IncludeMetadata  bool `doc:"Include the workflow run metadata in the exported directory." default:"false"`
+	IncludeSecrets   bool `doc:"Include the secrets in the exported directory." default:"false"`
+	IncludeEvent     bool `doc:"Include the event file in the exported directory." default:"false"`
+	IncludeActions   bool `doc:"Include the custom action repo in the exported directory." default:"false"`
+	IncludeArtifacts bool `doc:"Include the artifacts in the exported directory." default:"false"`
 }
 
 // models - internal structs used by gale

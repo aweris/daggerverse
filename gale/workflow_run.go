@@ -18,7 +18,7 @@ func (w *Workflows) Run(opts WorkflowRunOpts) *WorkflowRun {
 			WorkflowsConfig: w.Config,
 			WorkflowRunOpts: &opts,
 		},
-		InternalServices: NewInternalServices(),
+		InternalServices: NewInternalServices(InternalServiceOpts{CacheVolumeKeyPrefix: fmt.Sprintf("gale-%s-%s-", w.Config.Info.Owner, w.Config.Info.Name)}),
 	}
 }
 
@@ -47,10 +47,20 @@ func (wr *WorkflowRun) Directory(ctx context.Context, opts WorkflowRunDirectoryO
 		return nil, err
 	}
 
-	dir := dag.Directory().WithDirectory("runs", container.Directory("/home/runner/_temp/ghx/runs"))
+	runs := container.Directory("/home/runner/_temp/ghx/runs")
+
+	// runs directory should only have one entry with the workflow run id
+	entries, err := runs.Entries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	wrID := entries[0]
+
+	dir := dag.Directory().WithDirectory("runs", runs)
 
 	if opts.IncludeRepo {
-		dir = dir.WithDirectory("repo", container.Directory(fmt.Sprintf("/home/runner/work/%s/%s", wr.Config.Info.Name, wr.Config.Info.Name)))
+		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/repo", wrID), container.Directory(fmt.Sprintf("/home/runner/work/%s/%s", wr.Config.Info.Name, wr.Config.Info.Name)))
 	}
 
 	if opts.IncludeMetadata {
@@ -59,15 +69,15 @@ func (wr *WorkflowRun) Directory(ctx context.Context, opts WorkflowRunDirectoryO
 			WithExec([]string{"rm", "-rf", "/home/runner/_temp/exported_metadata"}).
 			WithExec([]string{"cp", "-r", "/home/runner/_temp/ghx/metadata", "/home/runner/_temp/exported_metadata"})
 
-		dir = dir.WithDirectory("metadata", container.Directory("/home/runner/_temp/exported_metadata"))
+		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/metadata", wrID), container.Directory("/home/runner/_temp/exported_metadata"))
 	}
 
 	if opts.IncludeSecrets {
-		dir = dir.WithDirectory("secrets", container.Directory("/home/runner/_temp/ghx/secrets"))
+		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/secrets", wrID), container.Directory("/home/runner/_temp/ghx/secrets"))
 	}
 
 	if opts.IncludeEvent && wr.Config.EventFile != nil {
-		dir = dir.WithFile("event.json", container.File(filepath.Join("/home", "runner", "work", "_temp", "_github_workflow", "event.json")))
+		dir = dir.WithFile(fmt.Sprintf("runs/%s/event.json", wrID), container.File(filepath.Join("/home", "runner", "work", "_temp", "_github_workflow", "event.json")))
 	}
 
 	if opts.IncludeActions {
@@ -75,7 +85,15 @@ func (wr *WorkflowRun) Directory(ctx context.Context, opts WorkflowRunDirectoryO
 			WithExec([]string{"rm", "-rf", "/home/runner/_temp/exported_actions"}).
 			WithExec([]string{"cp", "-r", "/home/runner/_temp/ghx/actions", "/home/runner/_temp/exported_actions"})
 
-		dir = dir.WithDirectory("actions", container.Directory("/home/runner/_temp/exported_actions"))
+		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/actions", wrID), container.Directory("/home/runner/_temp/exported_actions"))
+	}
+
+	if opts.IncludeArtifacts {
+		container = dag.Container().From("alpine:latest").
+			WithMountedCache("/artifacts", wr.InternalServices.ArtifactVolume).
+			WithExec([]string{"cp", "-r", fmt.Sprintf("/artifacts/%s", wrID), "/exported_artifacts"})
+
+		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/artifacts", wrID), container.Directory("/exported_artifacts"))
 	}
 
 	return dir, nil
@@ -111,6 +129,10 @@ func (wr *WorkflowRun) run(ctx context.Context) (*Container, error) {
 		actionsCache  = dag.CacheVolume(fmt.Sprintf("gale-%s-%s-actions", wr.Config.Info.Owner, wr.Config.Info.Name))
 	)
 
+	if wr.Config.Debug {
+		container = container.WithEnvVariable("RUNNER_DEBUG", "1")
+	}
+
 	container = container.WithEnvVariable("GHX_WORKFLOW", wr.Config.Workflow)
 	container = container.WithEnvVariable("GHX_JOB", wr.Config.Job)
 	container = container.WithEnvVariable("GHX_WORKFLOWS_DIR", wr.Config.WorkflowsDir)
@@ -118,6 +140,9 @@ func (wr *WorkflowRun) run(ctx context.Context) (*Container, error) {
 		WithMountedDirectory("/home/runner/_temp/ghx", dag.Directory()).
 		WithMountedCache("/home/runner/_temp/ghx/metadata", metadataCache, ContainerWithMountedCacheOpts{Sharing: Shared}).
 		WithMountedCache("/home/runner/_temp/ghx/actions", actionsCache, ContainerWithMountedCacheOpts{Sharing: Shared})
+
+	// workaround for disabling cache
+	container = container.WithEnvVariable("CACHE_BUSTER", time.Now().Format(time.RFC3339Nano))
 
 	// execute the workflow
 	container = container.WithExec([]string{"/usr/local/bin/ghx"}, ContainerWithExecOpts{ExperimentalPrivilegedNesting: true})
@@ -158,7 +183,7 @@ func (wr *WorkflowRun) container(ctx context.Context) (container *Container, err
 	}
 
 	// bind internal services
-	container, err = wr.InternalServices.BindServices(ctx, container, InternalServiceOpts{CacheVolumeKeyPrefix: fmt.Sprintf("gale-%s-%s-", wr.Config.Info.Owner, wr.Config.Info.Name)})
+	container, err = wr.InternalServices.BindServices(ctx, container)
 	if err != nil {
 		return nil, err
 	}

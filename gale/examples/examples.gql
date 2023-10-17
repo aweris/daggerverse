@@ -27,10 +27,10 @@ query run_result {
 query run_export {
     gale {
         setToken(token: "$GITHUB_TOKEN") {
-            repo(repo: "aweris/gale") {
-                workflows(workflowsDir: "ci/workflows") {
-                    run(workflow: "ci/workflows/lint.yaml") {
-                        directory(includeRepo: true, includeMetadata: true, includeSecrets: true, includeEvent: true, includeActions: true) {
+            repo(repo: "kubernetes/minikube") {
+                workflows {
+                    run(workflow: "build", job: "build_minikube") {
+                        directory(includeRepo: true, includeMetadata: true, includeSecrets: true, includeEvent: true, includeActions: true, includeArtifacts: true) {
                             export(path: ".gale")
                         }
                     }
