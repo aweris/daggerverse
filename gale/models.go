@@ -24,9 +24,13 @@ type WorkflowRunOpts struct {
 	RunnerImage string `doc:"The image to use for the runner." default:"ghcr.io/aweris/gale/runner/ubuntu:22.04"`
 }
 
-// WorkflowRunExportOpts represents the options for exporting a workflow run.
-type WorkflowRunExportOpts struct {
-	IncludeSource bool `doc:"Include the source code of the workflow run." default:"false"`
+// WorkflowRunDirectoryOpts represents the options for exporting a workflow run.
+type WorkflowRunDirectoryOpts struct {
+	IncludeRepo     bool `doc:"Include the repository source in the exported directory." default:"false"`
+	IncludeMetadata bool `doc:"Include the workflow run metadata in the exported directory." default:"false"`
+	IncludeSecrets  bool `doc:"Include the secrets in the exported directory." default:"false"`
+	IncludeEvent    bool `doc:"Include the event file in the exported directory." default:"false"`
+	IncludeActions  bool `doc:"Include the custom action repo in the exported directory." default:"false"`
 }
 
 // models - internal structs used by gale

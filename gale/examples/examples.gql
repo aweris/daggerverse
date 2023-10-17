@@ -29,8 +29,8 @@ query run_export {
         setToken(token: "$GITHUB_TOKEN") {
             repo(repo: "aweris/gale") {
                 workflows(workflowsDir: "ci/workflows") {
-                    run(workflow: "step", job: "run") {
-                        directory(includeSource: true) {
+                    run(workflow: "ci/workflows/lint.yaml") {
+                        directory(includeRepo: true, includeMetadata: true, includeSecrets: true, includeEvent: true, includeActions: true) {
                             export(path: ".gale")
                         }
                     }

@@ -41,16 +41,41 @@ func (wr *WorkflowRun) Sync(ctx context.Context) (*Container, error) {
 }
 
 // Directory returns the directory of the workflow run information.
-func (wr *WorkflowRun) Directory(ctx context.Context, opts WorkflowRunExportOpts) (*Directory, error) {
+func (wr *WorkflowRun) Directory(ctx context.Context, opts WorkflowRunDirectoryOpts) (*Directory, error) {
 	container, err := wr.run(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	dir := dag.Directory().WithDirectory("run", container.Directory("/home/runner/_temp/ghx"))
+	dir := dag.Directory().WithDirectory("runs", container.Directory("/home/runner/_temp/ghx/runs"))
 
-	if opts.IncludeSource {
-		dir = dir.WithDirectory("source", container.Directory(fmt.Sprintf("/home/runner/work/%s/%s", wr.Config.Info.Name, wr.Config.Info.Name)))
+	if opts.IncludeRepo {
+		dir = dir.WithDirectory("repo", container.Directory(fmt.Sprintf("/home/runner/work/%s/%s", wr.Config.Info.Name, wr.Config.Info.Name)))
+	}
+
+	if opts.IncludeMetadata {
+		// can't directly cache volume so we're copying the metadata to a temporary directory first
+		container = container.
+			WithExec([]string{"rm", "-rf", "/home/runner/_temp/exported_metadata"}).
+			WithExec([]string{"cp", "-r", "/home/runner/_temp/ghx/metadata", "/home/runner/_temp/exported_metadata"})
+
+		dir = dir.WithDirectory("metadata", container.Directory("/home/runner/_temp/exported_metadata"))
+	}
+
+	if opts.IncludeSecrets {
+		dir = dir.WithDirectory("secrets", container.Directory("/home/runner/_temp/ghx/secrets"))
+	}
+
+	if opts.IncludeEvent && wr.Config.EventFile != nil {
+		dir = dir.WithFile("event.json", container.File(filepath.Join("/home", "runner", "work", "_temp", "_github_workflow", "event.json")))
+	}
+
+	if opts.IncludeActions {
+		container = container.
+			WithExec([]string{"rm", "-rf", "/home/runner/_temp/exported_actions"}).
+			WithExec([]string{"cp", "-r", "/home/runner/_temp/ghx/actions", "/home/runner/_temp/exported_actions"})
+
+		dir = dir.WithDirectory("actions", container.Directory("/home/runner/_temp/exported_actions"))
 	}
 
 	return dir, nil
@@ -80,10 +105,19 @@ func (wr *WorkflowRun) run(ctx context.Context) (*Container, error) {
 	}
 
 	// loading request scoped configs
+
+	var (
+		metadataCache = dag.CacheVolume(fmt.Sprintf("gale-%s-%s-metadata", wr.Config.Info.Owner, wr.Config.Info.Name))
+		actionsCache  = dag.CacheVolume(fmt.Sprintf("gale-%s-%s-actions", wr.Config.Info.Owner, wr.Config.Info.Name))
+	)
+
 	container = container.WithEnvVariable("GHX_WORKFLOW", wr.Config.Workflow)
 	container = container.WithEnvVariable("GHX_JOB", wr.Config.Job)
 	container = container.WithEnvVariable("GHX_WORKFLOWS_DIR", wr.Config.WorkflowsDir)
-	container = container.WithMountedDirectory("/home/runner/_temp/ghx", dag.Directory()).WithEnvVariable("GHX_HOME", "/home/runner/_temp/ghx")
+	container = container.WithEnvVariable("GHX_HOME", "/home/runner/_temp/ghx").
+		WithMountedDirectory("/home/runner/_temp/ghx", dag.Directory()).
+		WithMountedCache("/home/runner/_temp/ghx/metadata", metadataCache, ContainerWithMountedCacheOpts{Sharing: Shared}).
+		WithMountedCache("/home/runner/_temp/ghx/actions", actionsCache, ContainerWithMountedCacheOpts{Sharing: Shared})
 
 	// execute the workflow
 	container = container.WithExec([]string{"/usr/local/bin/ghx"}, ContainerWithExecOpts{ExperimentalPrivilegedNesting: true})
@@ -131,9 +165,6 @@ func (wr *WorkflowRun) container(ctx context.Context) (container *Container, err
 
 	// add env variable to the container to indicate container is configured
 	container = container.WithEnvVariable("GALE_CONFIGURED", "true")
-
-	// hacks - TODO: clean-up later
-	container = container.WithNewFile("/home/runner/_temp/ghx/secrets/secret.json", ContainerWithNewFileOpts{Contents: "{}"})
 
 	return container, nil
 }
