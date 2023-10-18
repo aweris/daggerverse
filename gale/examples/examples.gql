@@ -15,8 +15,10 @@ query run_result {
         setToken(token: "$GITHUB_TOKEN") {
             repo(repo: "aweris/gale") {
                 workflows(workflowsDir: "ci/workflows") {
-                    run(workflow: "step", job: "run") {
-                        result
+                    run(workflow: "outputs") {
+                        directory {
+                            export(path: ".gale")
+                        }
                     }
                 }
             }

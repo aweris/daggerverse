@@ -18,7 +18,12 @@ func (w *Workflows) Run(opts WorkflowRunOpts) *WorkflowRun {
 			WorkflowsConfig: w.Config,
 			WorkflowRunOpts: &opts,
 		},
-		InternalServices: NewInternalServices(InternalServiceOpts{CacheVolumeKeyPrefix: fmt.Sprintf("gale-%s-%s-", w.Config.Info.Owner, w.Config.Info.Name)}),
+		InternalServices: NewInternalServices(
+			InternalServiceOpts{
+				CacheVolumeKeyPrefix: fmt.Sprintf("gale-%s-%s-", w.Config.Info.Owner, w.Config.Info.Name),
+				Dind:                 opts.Dind,
+				DockerSocket:         opts.DockerSocket,
+			}),
 	}
 }
 

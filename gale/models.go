@@ -17,12 +17,14 @@ type WorkflowOpts struct {
 
 // WorkflowRunOpts represents the options for running a workflow.
 type WorkflowRunOpts struct {
-	Workflow    string `doc:"The workflow to run."`
-	Job         string `doc:"The job name to run. If empty, all jobs will be run."`
-	EventName   string `doc:"Name of the event that triggered the workflow. e.g. push"`
-	EventFile   *File  `doc:"The file with the complete webhook event payload."`
-	RunnerImage string `doc:"The image to use for the runner." default:"ghcr.io/catthehacker/ubuntu:act-latest"`
-	Debug       bool   `doc:"Enable debug mode." default:"false"`
+	Workflow     string `doc:"The workflow to run."`
+	Job          string `doc:"The job name to run. If empty, all jobs will be run."`
+	EventName    string `doc:"Name of the event that triggered the workflow. e.g. push"`
+	EventFile    *File  `doc:"The file with the complete webhook event payload."`
+	RunnerImage  string `doc:"The image to use for the runner." default:"ghcr.io/catthehacker/ubuntu:act-latest"`
+	Debug        bool   `doc:"Enable debug mode." default:"false"`
+	Dind         bool   `doc:"Enable Docker-in-Dagger mode. This will start a Docker Service in dagger and bind it to the container. instead of using the host's Docker socket." default:"false"`
+	DockerSocket string `doc:"The host path to the Docker socket to bind to the container. Only used if DinD is false." default:"/var/run/docker.sock"`
 }
 
 // WorkflowRunDirectoryOpts represents the options for exporting a workflow run.
@@ -33,6 +35,13 @@ type WorkflowRunDirectoryOpts struct {
 	IncludeEvent     bool `doc:"Include the event file in the exported directory." default:"false"`
 	IncludeActions   bool `doc:"Include the custom action repo in the exported directory." default:"false"`
 	IncludeArtifacts bool `doc:"Include the artifacts in the exported directory." default:"false"`
+}
+
+// InternalServiceOpts represents the options for internal services.
+type InternalServiceOpts struct {
+	CacheVolumeKeyPrefix string `doc:"The prefix to use for the cache volume key." default:"gale"`
+	Dind                 bool   `doc:"Enable Docker-in-Dagger mode. This will start a Docker Service in dagger and bind it to the container. instead of using the host's Docker socket." default:"false"`
+	DockerSocket         string `doc:"The host path to the Docker socket to bind to the container. Only used if DinD is false." default:"/var/run/docker.sock"`
 }
 
 // models - internal structs used by gale
