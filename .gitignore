@@ -3,3 +3,6 @@
 
 # IDE
 .idea/
+
+# Local temorary files
+.gale/
