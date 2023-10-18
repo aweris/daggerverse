@@ -4,10 +4,11 @@ package main
 
 // RepoOpts represents the options for getting repository information.
 type RepoOpts struct {
-	Repo   string `json:"repo" doc:"name of the repository. name can be in the following formats: OWNER/REPO, HOST/OWNER/REPO, and a full URL. If empty, repository information of the current directory will be used."`
-	Branch string `json:"branch" doc:"branch to load workflows from. Only one of branch or tag can be used. Precedence is as follows: tag, branch, commit."`
-	Tag    string `json:"tag" doc:"tag to load workflows from. Only one of branch or tag can be used. Precedence is as follows: tag, branch, commit."`
-	Commit string `json:"commit" doc:"commit to load workflows from. Only one of commit, branch or tag can be used. Precedence is as follows: tag, branch, commit."`
+	Repo   string     `json:"repo" doc:"name of the repository. name can be in the following formats: OWNER/REPO, HOST/OWNER/REPO, and a full URL. If empty, the source will be mounted as the repository."`
+	Source *Directory `json:"-" doc:"the source to load the repository from. If additional commit, branch or tag options are provided, the source will be cloned and the commit, branch or tag will be checked out."`
+	Branch string     `json:"branch" doc:"branch to load workflows from. Only one of branch or tag can be used. Precedence is as follows: tag, branch, commit."`
+	Tag    string     `json:"tag" doc:"tag to load workflows from. Only one of branch or tag can be used. Precedence is as follows: tag, branch, commit."`
+	Commit string     `json:"commit" doc:"commit to load workflows from. Only one of commit, branch or tag can be used. Precedence is as follows: tag, branch, commit."`
 }
 
 // WorkflowOpts represents the options for getting workflow information.
@@ -65,6 +66,15 @@ type GithubRepositoryOwner struct {
 // GithubRepositoryBranchRef represents a GitHub repository branch ref
 type GithubRepositoryBranchRef struct {
 	Name string `json:"name"`
+}
+
+// WorkflowRunResult represents the result of a workflow run.
+type WorkflowRunResult struct {
+	Ran        bool   `json:"ran"`        // Ran indicates if the execution ran
+	Path       string `json:"path"`       // Path is the path to the workflow run directory
+	Name       string `json:"name"`       // Name is the name of the workflow run
+	Conclusion string `json:"conclusion"` // Conclusion of the execution
+	Duration   string `json:"duration"`   // Duration of the execution
 }
 
 // configurations - configurations used by gale entrypoint to easier configuration composition and reuse

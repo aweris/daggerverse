@@ -7,17 +7,13 @@ import (
 
 // getGithubRepository returns a new GithubRepository with given repository name and options.
 func (g *Gale) getGithubRepository(ctx context.Context, opts RepoOpts) (*GithubRepository, error) {
-	var source *Directory
-
 	args := []string{"repo", "view", opts.Repo, "--json", "id,name,owner,nameWithOwner,url,defaultBranchRef"}
 
 	container := gh().WithSecretVariable("GITHUB_TOKEN", g.Config.Token)
 
 	// if the repository is not set, mount the current directory as the repository
 	if opts.Repo == "" {
-		source = dag.Host().Directory(".")
-
-		container = container.WithMountedDirectory("/src", source).WithWorkdir("/src")
+		container = container.WithMountedDirectory("/src", opts.Source).WithWorkdir("/src")
 	}
 
 	var info *GithubRepository
@@ -34,7 +30,7 @@ func (g *Gale) getGithubRepository(ctx context.Context, opts RepoOpts) (*GithubR
 // empty, the current directory is returned. If repo name is provided but no other options are provided, the default
 // branch is used.
 func (g *Gale) getGithubRepositorySource(info *GithubRepository, opts RepoOpts) (*Directory, error) {
-	var source *Directory
+	source := opts.Source
 
 	// if all options are empty, use the current directory
 	if opts.Repo == "" && opts.Branch == "" && opts.Commit == "" && opts.Tag == "" {

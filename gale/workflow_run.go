@@ -27,14 +27,6 @@ func (w *Workflows) Run(opts WorkflowRunOpts) *WorkflowRun {
 	}
 }
 
-// Result represents the result of a workflow run.
-type Result struct {
-	Ran         bool      `json:"ran"`         // Ran indicates if the execution ran
-	Conclusion  string    `json:"conclusion"`  // Conclusion of the execution
-	StartedAt   time.Time `json:"startedAt"`   // StartedAt time of the execution
-	CompletedAt time.Time `json:"completedAt"` // CompletedAt time of the execution
-}
-
 // Sync forces to evaluate the workflow run and returns the container.
 func (wr *WorkflowRun) Sync(ctx context.Context) (*Container, error) {
 	container, err := wr.run(ctx)
@@ -111,14 +103,26 @@ func (wr *WorkflowRun) Result(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	var result Result
+	var result WorkflowRunResult
 
-	err = container.File("/home/runner/_temp/ghx/result.json").unmarshalContentsToJSON(ctx, &result)
+	runs := container.Directory("/home/runner/_temp/ghx/runs")
+
+	// runs directory should only have one entry with the workflow run id
+	entries, err := runs.Entries(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("Workflow %s completed with conclusion %s in %s", wr.Config.Workflow, result.Conclusion, result.CompletedAt.Sub(result.StartedAt).String()), nil
+	wrID := entries[0]
+
+	resultJSON := filepath.Join("/home/runner/_temp/ghx/runs", wrID, "workflow_run.json")
+
+	err = container.File(resultJSON).unmarshalContentsToJSON(ctx, &result)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Workflow %s completed with conclusion %s in %s", result.Name, result.Conclusion, result.Duration), nil
 }
 
 func (wr *WorkflowRun) run(ctx context.Context) (*Container, error) {

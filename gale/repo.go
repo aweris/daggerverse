@@ -12,6 +12,14 @@ type Repo struct {
 
 // Repo returns a new Repo with given repository options.
 func (g *Gale) Repo(ctx context.Context, opts RepoOpts) (*Repo, error) {
+	if g.Config.Token == nil {
+		return nil, fmt.Errorf("github token must be provided")
+	}
+
+	if opts.Repo == "" && opts.Source == nil {
+		return nil, fmt.Errorf("repository name or source must be provided")
+	}
+
 	info, err := g.getGithubRepository(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to get repository information", err)
