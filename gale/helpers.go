@@ -59,11 +59,14 @@ func (c *Container) withGithubCli() *Container {
 	return c.WithFile("/usr/local/bin/gh", dag.Gh().GetGithubCli(GHCliVersion))
 }
 
+// gh returns a container with the github cli as the entrypoint.
 func gh() *Container {
-	return dag.Container().
-		From("alpine/git:latest").
-		withGithubCli().
-		WithEntrypoint([]string{"/usr/local/bin/gh"})
+	return git().withGithubCli().WithEntrypoint([]string{"/usr/local/bin/gh"})
+}
+
+// git returns a container with the git image.
+func git() *Container {
+	return dag.Container().From("alpine/git:latest")
 }
 
 // base returns a container with the base image for gale.

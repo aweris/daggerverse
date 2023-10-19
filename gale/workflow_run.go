@@ -171,7 +171,7 @@ func (wr *WorkflowRun) container(ctx context.Context) (container *Container, err
 	}
 
 	// load repo config to the container
-	container, err = container.withRepo(wr.Config.Info, wr.Config.Source)
+	container, err = container.withRepo(wr.Config.Info, wr.Config.Source, wr.Config.Ref)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (wr *WorkflowRun) container(ctx context.Context) (container *Container, err
 
 // withRepo loads the repository information into the container. context arg and error return value are not used here
 // but added to keep the signature of the function consistent with other load*Config functions.
-func (c *Container) withRepo(info *GithubRepository, source *Directory) (*Container, error) {
+func (c *Container) withRepo(info *GithubRepository, source *Directory, ref *RepositoryRef) (*Container, error) {
 	workdir := filepath.Join("/home", "runner", "work", info.Name, info.Name)
 
 	container := c.WithMountedDirectory(workdir, source).
@@ -207,7 +207,11 @@ func (c *Container) withRepo(info *GithubRepository, source *Directory) (*Contai
 		WithEnvVariable("GITHUB_REPOSITORY_ID", info.ID).
 		WithEnvVariable("GITHUB_REPOSITORY_OWNER", info.Owner.Login).
 		WithEnvVariable("GITHUB_REPOSITORY_OWNER_ID", info.Owner.ID).
-		WithEnvVariable("GITHUB_REPOSITORY_URL", info.URL)
+		WithEnvVariable("GITHUB_REPOSITORY_URL", info.URL).
+		WithEnvVariable("GITHUB_REF", ref.Ref).
+		WithEnvVariable("GITHUB_REF_NAME", ref.RefName).
+		WithEnvVariable("GITHUB_REF_TYPE", ref.RefType).
+		WithEnvVariable("GITHUB_SHA", ref.SHA)
 
 	return container, nil
 }

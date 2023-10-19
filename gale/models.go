@@ -67,6 +67,17 @@ type GithubRepositoryBranchRef struct {
 	Name string `json:"name"`
 }
 
+// RepositoryRef represents a git repository ref information. This is used to get the ref information from the local git
+// from the repository source.
+type RepositoryRef struct {
+	Ref      string // Ref is the branch or tag ref that triggered the workflow
+	RefName  string // RefName is the short name (without refs/heads/ prefix) of the branch or tag ref that triggered the workflow.
+	RefType  string // RefType is the type of ref that triggered the workflow. Possible values are branch, tag, or empty, if neither
+	SHA      string // SHA is the commit SHA that triggered the workflow. The value of this commit SHA depends on the event that
+	ShortSHA string // ShortSHA is the short commit SHA that triggered the workflow. The value of this commit SHA depends on the event that
+	IsRemote bool   // IsRemote is true if the ref is a remote ref.
+}
+
 // WorkflowRunResult represents the result of a workflow run.
 type WorkflowRunResult struct {
 	Ran        bool   `json:"ran"`        // Ran indicates if the execution ran
@@ -89,6 +100,7 @@ type RepoConfig struct {
 
 	Info   *GithubRepository
 	Source *Directory
+	Ref    *RepositoryRef
 }
 
 type WorkflowsConfig struct {

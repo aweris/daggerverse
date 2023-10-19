@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"path"
+	"strings"
 )
 
 // getGithubRepository returns a new GithubRepository with given repository name and options.
@@ -54,4 +57,101 @@ func (g *Gale) getGithubRepositorySource(info *GithubRepository, opts RepoOpts) 
 	}
 
 	return source, nil
+}
+
+// getRepositoryRef returns a new RepositoryRef with given repository information and options.
+func (g *Gale) getRepositoryRef(ctx context.Context, info *GithubRepository, source *Directory, opts RepoOpts) (*RepositoryRef, error) {
+	out, err := git().WithMountedDirectory("/src", source).WithWorkdir("/src").
+		WithExec([]string{"rev-parse", "HEAD"}).
+		Stdout(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		ref      = ""
+		refName  = ""
+		refType  = ""
+		head     = strings.TrimSpace(out)
+		isRemote = opts.Repo != "" || opts.Branch != "" || opts.Tag != "" || opts.Commit != ""
+	)
+
+	switch {
+	case opts.Tag != "":
+		ref = fmt.Sprintf("refs/tags/%s", opts.Tag)
+		refName = opts.Tag
+		refType = "tag"
+	case opts.Branch != "":
+		ref = fmt.Sprintf("refs/heads/%s", opts.Branch)
+		refName = opts.Branch
+		refType = "branch"
+	case opts.Commit != "":
+		ref = fmt.Sprintf("refs/heads/%s", opts.Commit)
+		refName = opts.Commit
+		refType = "commit"
+	case isRemote:
+		ref = fmt.Sprintf("refs/heads/%s", info.DefaultBranchRef.Name)
+		refName = info.DefaultBranchRef.Name
+		refType = "branch"
+	default:
+		ref, err = getRefFromDirectory(ctx, head, source)
+		if err != nil {
+			return nil, err
+		}
+
+		refName = path.Base(ref)
+
+		switch {
+		case strings.HasPrefix(ref, "refs/tags/"):
+			refType = "tag"
+		case strings.HasPrefix(ref, "refs/heads/"):
+			refType = "branch"
+		default:
+			refType = "commit"
+		}
+
+	}
+	return &RepositoryRef{
+		Ref:      ref,
+		RefName:  refName,
+		RefType:  refType,
+		SHA:      head,
+		ShortSHA: head[:7],
+		IsRemote: isRemote,
+	}, nil
+}
+
+func getRefFromDirectory(ctx context.Context, head string, source *Directory) (string, error) {
+	out, err := git().WithMountedDirectory("/src", source).WithWorkdir("/src").
+		WithExec([]string{"show-ref"}).
+		Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(out))
+
+	found := ""
+	for scanner.Scan() {
+		ref := scanner.Text()
+
+		parts := strings.Fields(ref)
+
+		if len(parts) < 2 {
+			continue
+		}
+
+		ref = strings.TrimSpace(parts[0])
+
+		if ref == head {
+			found = strings.TrimSpace(parts[1])
+			break
+		}
+	}
+
+	if found == "" {
+		return "", fmt.Errorf("no ref found for %s", head)
+	}
+
+	return found, nil
 }
