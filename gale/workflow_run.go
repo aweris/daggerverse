@@ -134,7 +134,7 @@ func (wr *WorkflowRun) run(ctx context.Context) (*Container, error) {
 	// loading request scoped configs
 
 	var (
-		metadataCache = dag.CacheVolume(fmt.Sprintf("gale-%s-%s-metadata", wr.Config.Info.Owner, wr.Config.Info.Name))
+		metadataCache = dag.CacheVolume("gale-metadata")
 		actionsCache  = dag.CacheVolume(fmt.Sprintf("gale-%s-%s-actions", wr.Config.Info.Owner, wr.Config.Info.Name))
 	)
 
