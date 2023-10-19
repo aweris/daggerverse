@@ -1,11 +1,11 @@
 go 1.21.3
 
 use (
-	./docker
-	./gale
-	./gh
-	./helm
-	./kind
-	./kubectl
-	./repo
+	1password
+	docker
+	gale
+	gh
+	helm
+	kind
+	kubectl
 )
