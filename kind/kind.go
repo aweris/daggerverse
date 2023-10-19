@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -162,24 +161,17 @@ func (m *Cluster) Delete(ctx context.Context) (*Cluster, error) {
 
 // exec executes the kind command with the given arguments.
 func (c *Container) kind(args []string) *Container {
-	return c.WithExec(append([]string{"kind"}, args...))
+	return c.WithExec(append([]string{"kind"}, args...), ContainerWithExecOpts{ExperimentalPrivilegedNesting: true})
 }
 
 // container returns a container with the docker and kind binaries installed and the docker socket mounted. As last
 // step, it adds a CACHE_BUSTER environment variable to the container to avoid using the cache when running the
 // commands.
 func container() *Container {
-	socket := "/var/run/docker.sock"
-
-	if env := os.Getenv("DOCKER_HOST"); env != "" {
-		socket = strings.TrimPrefix(env, "unix://")
-	}
-
 	return dag.Container().
 		From("alpine:latest").
 		WithUser("root").
 		WithExec([]string{"apk", "add", "--no-cache", "docker", "kind"}).
-		WithUnixSocket("/var/run/docker.sock", dag.Host().UnixSocket(socket)).
 		WithEnvVariable("CACHE_BUSTER", time.Now().Format(time.RFC3339Nano))
 }
 
