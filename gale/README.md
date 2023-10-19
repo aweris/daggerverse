@@ -338,7 +338,6 @@ related files.
 ```graphql
 directory(
     includeRepo:      Boolean # Include the repository source in the exported directory. Default is `false`
-    includeMetadata:  Boolean # Include the workflow run metadata in the exported directory. Default is `false`
     includeSecrets:   Boolean # Include the secrets in the exported directory. Default is `false`
     includeEvent:     Boolean # Include the event file in the exported directory. Default is `false`
     includeActions:   Boolean # Include the custom action repos used in runner in the exported directory. Default is `false`
@@ -355,7 +354,7 @@ Example GraphQL query:
             repo(repo: "kubernetes/minikube") {
                 workflows {
                     run(workflow: "build", job: "lint") {
-                       directory {
+                       directory(includeRepo: true, includeSecrets: true, includeEvent: true, includeActions: true, includeArtifacts: true) {
                            # Directory object
                        }
                     }

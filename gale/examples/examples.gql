@@ -32,7 +32,7 @@ query run_export {
             repo(repo: "kubernetes/minikube") {
                 workflows {
                     run(workflow: "build", job: "build_minikube") {
-                        directory(includeRepo: true, includeMetadata: true, includeSecrets: true, includeEvent: true, includeActions: true, includeArtifacts: true) {
+                        directory(includeRepo: true, includeSecrets: true, includeEvent: true, includeActions: true, includeArtifacts: true) {
                             export(path: ".gale")
                         }
                     }

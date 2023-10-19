@@ -60,15 +60,6 @@ func (wr *WorkflowRun) Directory(ctx context.Context, opts WorkflowRunDirectoryO
 		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/repo", wrID), container.Directory(fmt.Sprintf("/home/runner/work/%s/%s", wr.Config.Info.Name, wr.Config.Info.Name)))
 	}
 
-	if opts.IncludeMetadata {
-		// can't directly cache volume so we're copying the metadata to a temporary directory first
-		container = container.
-			WithExec([]string{"rm", "-rf", "/home/runner/_temp/exported_metadata"}).
-			WithExec([]string{"cp", "-r", "/home/runner/_temp/ghx/metadata", "/home/runner/_temp/exported_metadata"})
-
-		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/metadata", wrID), container.Directory("/home/runner/_temp/exported_metadata"))
-	}
-
 	if opts.IncludeSecrets {
 		dir = dir.WithDirectory(fmt.Sprintf("runs/%s/secrets", wrID), container.Directory("/home/runner/_temp/ghx/secrets"))
 	}
