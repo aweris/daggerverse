@@ -228,7 +228,7 @@ run(
     runnerImage:  String  # Docker image to use for the runner. Default is `ghcr.io/catthehacker/ubuntu:act-latest`
     debug:        Boolean # Enable debug mode. Default is `false`
     dind:         Boolean # Start docker-in-dagger service to isolate docker daemon. Default is `false`
-    dockerSocket: String  # Path to docker socket. Only used if `dind` is not `true`. Default is `/var/run/docker.sock`
+    dockerSocket: Socket  # Docker socket to use for docker-out-of-dagger config. if it is set together with `dind`, `dind` takes precedence.
 ): WorkflowRun
 ```
 

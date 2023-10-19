@@ -7,7 +7,7 @@ import (
 
 type InternalServices struct {
 	Dind                bool
-	DockerSocket        string
+	DockerSocket        *Socket
 	DockerVolume        *CacheVolume
 	ArtifactVolume      *CacheVolume
 	ArtifactCacheVolume *CacheVolume
@@ -45,17 +45,19 @@ func (is *InternalServices) BindServices(ctx context.Context, c *Container) (con
 	return container.WithEnvVariable("ACTIONS_RUNTIME_TOKEN", "token"), nil
 }
 
-// BindDocker binds the Docker to the given container.
+// BindDocker binds the Docker to the given container if DinD or DooD is enabled. otherwise it does nothing.
 func (is *InternalServices) BindDocker(_ context.Context, container *Container, volume *CacheVolume) (*Container, error) {
-	if !is.Dind {
-		socket := dag.Host().UnixSocket(is.DockerSocket)
+	if is.Dind {
+		return dag.Docker().BindAsService(container, DockerBindAsServiceOpts{CacheVolume: volume}), nil
+	}
 
-		return container.WithUnixSocket(is.DockerSocket, socket).
-			WithEnvVariable("DOCKER_HOST", fmt.Sprintf("unix://%s", is.DockerSocket)).
+	if is.DockerSocket != nil {
+		return container.WithUnixSocket("/var/run/docker.sock", is.DockerSocket).
+			WithEnvVariable("DOCKER_HOST", fmt.Sprintf("unix:///var/run/docker.sock")).
 			WithMountedCache("/var/lib/docker", volume, ContainerWithMountedCacheOpts{Sharing: Shared}), nil
 	}
 
-	return dag.Docker().BindAsService(container, DockerBindAsServiceOpts{CacheVolume: volume}), nil
+	return container, nil
 }
 
 // BindArtifactService binds the Github Actions artifact service to the given container.
