@@ -204,9 +204,7 @@ func (c *Container) withRepo(info *GithubRepository, source *Directory, ref *Rep
 		WithEnvVariable("GITHUB_WORKSPACE", workdir).
 		WithEnvVariable("GH_REPO", info.NameWithOwner). // go-gh respects this variable while loading the repository.
 		WithEnvVariable("GITHUB_REPOSITORY", info.NameWithOwner).
-		WithEnvVariable("GITHUB_REPOSITORY_ID", info.ID).
-		WithEnvVariable("GITHUB_REPOSITORY_OWNER", info.Owner.Login).
-		WithEnvVariable("GITHUB_REPOSITORY_OWNER_ID", info.Owner.ID).
+		WithEnvVariable("GITHUB_REPOSITORY_OWNER", info.Owner).
 		WithEnvVariable("GITHUB_REPOSITORY_URL", info.URL).
 		WithEnvVariable("GITHUB_REF", ref.Ref).
 		WithEnvVariable("GITHUB_REF_NAME", ref.RefName).

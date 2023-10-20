@@ -48,23 +48,10 @@ type InternalServiceOpts struct {
 
 // GithubRepository represents a GitHub repository
 type GithubRepository struct {
-	ID               string                    `json:"id"`
-	Name             string                    `json:"name"`
-	NameWithOwner    string                    `json:"nameWithOwner"`
-	URL              string                    `json:"url" `
-	Owner            GithubRepositoryOwner     `json:"owner"`
-	DefaultBranchRef GithubRepositoryBranchRef `json:"defaultBranchRef"`
-}
-
-// GithubRepositoryOwner represents a GitHub repository owner
-type GithubRepositoryOwner struct {
-	ID    string `json:"id"`
-	Login string `json:"login"`
-}
-
-// GithubRepositoryBranchRef represents a GitHub repository branch ref
-type GithubRepositoryBranchRef struct {
-	Name string `json:"name"`
+	Name          string `json:"name"`
+	NameWithOwner string `json:"nameWithOwner"`
+	URL           string `json:"url" `
+	Owner         string `json:"owner"`
 }
 
 // RepositoryRef represents a git repository ref information. This is used to get the ref information from the local git

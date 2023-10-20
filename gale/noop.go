@@ -13,10 +13,6 @@ func (_ *WorkflowRunDirectoryOpts) Noop() {}
 
 func (_ GithubRepository) Noop() {}
 
-func (_ GithubRepositoryOwner) Noop() {}
-
-func (_ GithubRepositoryBranchRef) Noop() {}
-
 func (_ RepositoryRef) Noop() {}
 
 func (_ AuthConfig) Noop() {}
