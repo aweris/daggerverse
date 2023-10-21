@@ -26,6 +26,7 @@ type WorkflowRunOpts struct {
 	Debug        bool    `doc:"Enable debug mode." default:"false"`
 	Dind         bool    `doc:"Enable Docker-in-Dagger mode. This will start a Docker Service in dagger and bind it to the container. instead of using the host's Docker socket." default:"false"`
 	DockerSocket *Socket `doc:"Docker socket to enable Docker-out-of-Dagger mode. This will bind the Docker socket to the container. This is only used if DinD is false."`
+	Token        string  `doc:"The GitHub token to use for authentication."`
 }
 
 // WorkflowRunDirectoryOpts represents the options for exporting a workflow run.
@@ -76,15 +77,8 @@ type WorkflowRunResult struct {
 
 // configurations - configurations used by gale entrypoint to easier configuration composition and reuse
 
-// AuthConfig holds the GITHUB_TOKEN secret.
-type AuthConfig struct {
-	Token *Secret
-}
-
 // RepoConfig holds the repository information and source.
 type RepoConfig struct {
-	*AuthConfig
-
 	Info   *GithubRepository
 	Source *Directory
 	Ref    *RepositoryRef

@@ -46,9 +46,26 @@ func (is *InternalServices) BindServices(ctx context.Context, c *Container) (con
 }
 
 // BindDocker binds the Docker to the given container if DinD or DooD is enabled. otherwise it does nothing.
-func (is *InternalServices) BindDocker(_ context.Context, container *Container, volume *CacheVolume) (*Container, error) {
+func (is *InternalServices) BindDocker(ctx context.Context, container *Container, volume *CacheVolume) (*Container, error) {
 	if is.Dind {
-		return dag.Docker().BindAsService(container, DockerBindAsServiceOpts{CacheVolume: volume}), nil
+		service := dag.Container().
+			From("docker:dind").
+			WithUser("root").
+			WithEnvVariable("DOCKER_TLS_CERTDIR", ""). // disable TLS
+			WithExec([]string{"-H", "tcp://0.0.0.0:2375"}, ContainerWithExecOpts{InsecureRootCapabilities: true}).
+			WithExposedPort(2375).
+			WithMountedCache("/var/lib/docker", volume, ContainerWithMountedCacheOpts{Sharing: Shared}).
+			AsService()
+		
+		// get the endpoint of the service to set the DOCKER_HOST environment variable. The reason we're not using the
+		// alias for docker is because the service alias is not available in the child containers of the container.
+		endpoint, err := service.Endpoint(ctx, ServiceEndpointOpts{Scheme: "tcp"})
+		if err != nil {
+			return nil, err
+		}
+
+		// bind the service to the container and set the DOCKER_HOST environment variable.
+		return container.WithServiceBinding("docker", service).WithEnvVariable("DOCKER_HOST", endpoint), nil
 	}
 
 	if is.DockerSocket != nil {

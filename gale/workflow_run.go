@@ -158,11 +158,10 @@ func (wr *WorkflowRun) run(ctx context.Context) (*Container, error) {
 func (wr *WorkflowRun) container(ctx context.Context) (container *Container, err error) {
 	container = dag.Container().From(wr.Config.RunnerImage)
 
-	// set github token as secret
-	container = container.WithSecretVariable("GITHUB_TOKEN", wr.Config.Token)
-
-	// load github cli to the container
-	container = container.withGithubCli()
+	if wr.Config.Token != "" {
+		// set github token as secret
+		container = container.WithSecretVariable("GITHUB_TOKEN", dag.SetSecret("GITHUB_TOKEN", wr.Config.Token))
+	}
 
 	// load ghx to the container
 	container, err = container.withGHX(ctx)

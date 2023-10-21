@@ -15,8 +15,6 @@ func (_ GithubRepository) Noop() {}
 
 func (_ RepositoryRef) Noop() {}
 
-func (_ AuthConfig) Noop() {}
-
 func (_ *RepoConfig) Noop() {}
 
 func (_ *WorkflowsConfig) Noop() {}

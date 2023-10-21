@@ -33,7 +33,7 @@ func (g *Gale) Repo(ctx context.Context, opts RepoOpts) (*Repo, error) {
 		return nil, fmt.Errorf("%w: failed to get repository ref", err)
 	}
 
-	return &Repo{Config: &RepoConfig{AuthConfig: g.Config, Info: info, Source: source, Ref: ref}}, nil
+	return &Repo{Config: &RepoConfig{Info: info, Source: source, Ref: ref}}, nil
 }
 
 // Workflows returns a workflows of the repository at given path.

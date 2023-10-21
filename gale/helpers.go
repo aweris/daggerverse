@@ -52,18 +52,6 @@ func (f *File) unmarshalContentsToYAML(ctx context.Context, v interface{}) error
 	return nil
 }
 
-const GHCliVersion = "v2.24.0"
-
-// withGithubCli installs the github cli in the container.
-func (c *Container) withGithubCli() *Container {
-	return c.WithFile("/usr/local/bin/gh", dag.Gh().GetGithubCli(GHCliVersion))
-}
-
-// gh returns a container with the github cli as the entrypoint.
-func gh() *Container {
-	return git().withGithubCli().WithEntrypoint([]string{"/usr/local/bin/gh"})
-}
-
 // git returns a container with the git image.
 func git() *Container {
 	return dag.Container().From("alpine/git:latest")
