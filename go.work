@@ -1,9 +1,8 @@
-go 1.21d
+go 1.21
 
 use (
 	1password
 	docker
-	gale
 	gh
 	helm
 	kind
