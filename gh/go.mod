@@ -3,16 +3,15 @@ module gh
 go 1.20
 
 require (
-	github.com/99designs/gqlgen v0.17.39
+	github.com/99designs/gqlgen v0.17.31
 	github.com/Khan/genqlient v0.6.0
 	github.com/hashicorp/go-getter v1.7.3
-	golang.org/x/sync v0.4.0
+	golang.org/x/sync v0.3.0
 )
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
-	github.com/sosodev/duration v1.2.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 )
@@ -37,9 +36,9 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/stretchr/testify v1.8.3 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.10 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.6 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/net v0.16.0 // indirect
