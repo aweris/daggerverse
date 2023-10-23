@@ -3,7 +3,6 @@ go 1.21.3
 use (
 	1password
 	docker
-	gale
 	gh
 	helm
 	kind

@@ -1,9 +1,0 @@
-{
-  "name": "gale",
-  "sdk": "go",
-  "sdkRuntime": "vito/dagger-sdk-go:b0b1458855f193526e52d3d70c32119228a21db0@sha256:e64d7b200b83cffaa30ab8e5a6ba4cef43e1ba212edd27a35cb44ee227c2e721",
-  "dependencies": [
-    "github.com/aweris/daggerverse/docker@24eb495d50e8e2fc7239553e9168a713a8bab620",
-    "github.com/aweris/daggerverse/gh@9d5b980d2dbaf1d51d99b212096adca7d27cfc70"
-  ]
-}
