@@ -1,42 +1,67 @@
 # Dagger KinD Module
 
-Manage KinD clusters using Dagger.
+Easily manage KinD clusters through Dagger.
 
-## Examples
+## Before you start
 
-### Create a KinD cluster and Export Kubeconfig
-
-The following query will create a KinD cluster named `my-cluster` and export its kubeconfig to `./config` file:
+Set `DAGGER_MODULE` to environment variable to avoid using `-m github.com/aweris/daggerverse/kind` in every command.
 
 ```shell
-dagger query -m github.com/aweris/daggerverse/kind --progress=plain <<EOF
-{
-    kind {
-        cluster (name: "my-cluster") {
-            create { 
-              kubeconfig (internal: false) { export(path: "./config") }
-            }
-        }
-    }
-}
-EOF
+export DAGGER_MODULE=github.com/aweris/daggerverse/kind
 ```
 
-### Run KinD Cli directly to create a cluster and export kubeconfig 
+## Commands
 
-The following query will execute `kind` cli directly with given arguments and calls `stdout` function from the returned
-container to get the output:
+### Create a KinD cluster
 
 ```shell
-dagger query -m github.com/aweris/daggerverse/kind --progress=plain <<EOF
-{
-    kind {
-            exec (args: ["get", "clusters"]) {
-                 stdout
-            }
-    }
-}
-EOF
+dagger call cluster --name my-cluster create
+```
+
+- If no name is given, it defaults to kind.
+- if cluster already exists, it won't be created again. It is safe to call this command multiple times.
+
+### Export Kubeconfig
+
+Save the kubeconfig file to ./config:
+
+For connecting from host: 
+
+```shell
+dagger download --name my-cluster kubeconfig --export-path ./config
+```
+For connecting from inside the cluster:
+
+```shell
+dagger download cluster --name my-cluster kubeconfig --internal --export-path ./config
+```
+
+### Download Cluster Logs 
+
+Save cluster logs to `./logs` directory:
+
+```shell
+dagger download cluster --name my-cluster logs --export-path ./logs
+```
+
+### Delete a Cluster
+
+```shell
+dagger call cluster --name my-cluster delete
+```
+
+### Command Shells
+
+For KinD cli:
+
+```shell
+dagger shell cluster --name my-cluster cli
+```
+
+For K9S:
+
+```shell
+dagger shell -m github.com/aweris/daggerverse/kind cluster --name my-cluster k-9-s
 ```
 
 ## Limitations
