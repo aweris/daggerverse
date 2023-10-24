@@ -199,7 +199,7 @@ func (c *Container) kind(args []string) *Container {
 // commands.
 func container() *Container {
 	return dag.Container().
-		From("alpine:latest").
+		From("alpine/k8s:1.28.3").
 		WithUser("root").
 		WithExec([]string{"apk", "add", "--no-cache", "docker", "kind", "k9s"}).
 		WithUnixSocket("/var/run/docker.sock", dag.Host().UnixSocket("/var/run/docker.sock")).
