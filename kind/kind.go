@@ -12,8 +12,16 @@ import (
 type Kind struct{}
 
 // Cli returns a container with the kind binary installed.
-func (m *Kind) Cli(_ context.Context) *Container {
-	return container()
+func (m *Kind) Cli(ctx context.Context) (*Container, error) {
+	// Get the network name for the engine containers to ensure the cluster is created on the same network. It's
+	// important to use the same network to be able to access the cluster from other containers using the IP address of
+	// the cluster.
+	network, err := getContainersNetwork(ctx, "^dagger-engine-*")
+	if err != nil {
+		return nil, err
+	}
+
+	return container().WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network), nil
 }
 
 // KindClusterOpts represents the options for the KindCluster function.
