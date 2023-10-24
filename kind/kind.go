@@ -24,6 +24,17 @@ func (m *Kind) Cli(ctx context.Context) (*Container, error) {
 	return container().WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network), nil
 }
 
+// Connect returns a container with the kubeconfig file mounted to be able to access the given cluster. If the cluster
+// doesn't exist, it returns an error.
+func (m *Kind) Connect(ctx context.Context, opts KindClusterOpts) (*Container, error) {
+	cluster, err := m.Cluster(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return container().withKubeConfig(ctx, cluster)
+}
+
 // KindClusterOpts represents the options for the KindCluster function.
 type KindClusterOpts struct {
 	Name string `doc:"name of the cluster" default:"kind"`
@@ -166,16 +177,16 @@ func (m *Cluster) Delete(ctx context.Context) (string, error) {
 	return fmt.Sprintf("cluster %s deleted", m.Name), nil
 }
 
-// K9s returns a container with k9s installed and the kubeconfig file mounted to be able to access the cluster using
-// k9s.
-func (m *Kind) K9s(ctx context.Context, opts KindClusterOpts) (*Container, error) {
-	cluster, err := m.Cluster(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
+// exec executes the kind command with the given arguments.
+func (c *Container) kind(args []string) *Container {
+	return c.WithExec(append([]string{"kind"}, args...), ContainerWithExecOpts{ExperimentalPrivilegedNesting: true})
+}
 
+// withKubeConfig returns a container with the kubeconfig file mounted to be able to access the given cluster. If the
+// cluster doesn't exist, it returns an error.
+func (c *Container) withKubeConfig(ctx context.Context, cluster *Cluster) (*Container, error) {
 	if !cluster.Exists {
-		return nil, fmt.Errorf("cluster %s doesn't exist", opts.Name)
+		return nil, fmt.Errorf("cluster %s doesn't exist", cluster.Name)
 	}
 
 	kubeconfig, err := cluster.Kubeconfig(ctx, KubeConfigOpts{Internal: true})
@@ -183,15 +194,7 @@ func (m *Kind) K9s(ctx context.Context, opts KindClusterOpts) (*Container, error
 		return nil, err
 	}
 
-	return dag.Container().
-		From("quay.io/derailed/k9s:latest").
-		WithEnvVariable("KUBECONFIG", "/root/.kube/config").
-		WithMountedFile("/root/.kube/config", kubeconfig), nil
-}
-
-// exec executes the kind command with the given arguments.
-func (c *Container) kind(args []string) *Container {
-	return c.WithExec(append([]string{"kind"}, args...), ContainerWithExecOpts{ExperimentalPrivilegedNesting: true})
+	return c.WithMountedFile("/root/.kube/config", kubeconfig).WithEnvVariable("KUBECONFIG", "/root/.kube/config"), nil
 }
 
 // container returns a container with the docker and kind binaries installed and the docker socket mounted. As last

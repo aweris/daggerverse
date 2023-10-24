@@ -52,17 +52,27 @@ dagger call cluster --name my-cluster delete
 
 ### Command Shells
 
-For KinD cli:
+Starts a new shell environment:
 
 ```shell
-dagger shell cluster --name my-cluster cli
+dagger shell cli
 ```
 
-For K9S:
+Connects existing cluster default environment:
 
 ```shell
-dagger shell -m github.com/aweris/daggerverse/kind cluster --name my-cluster k-9-s
+dagger shell connect --name my-cluster
 ```
+
+Connects existing cluster with k9s:
+
+```shell
+dagger shell --entrypoint k9s connect --name my-cluster
+```
+
+## Flags      
+
+- `--name` : Name of the cluster. Defaults to `kind`.
 
 ## Limitations
 
