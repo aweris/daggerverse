@@ -215,6 +215,7 @@ func container(dockerHost string) *Container {
 	container := dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithUser("root").
+		WithWorkdir("/").
 		WithExec([]string{"apk", "add", "--no-cache", "docker", "kind", "k9s"})
 
 	// TODO: validate this works, for custom socket and hosts this could fail
