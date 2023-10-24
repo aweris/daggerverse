@@ -11,12 +11,8 @@ import (
 // Kind represents the KinD module for Dagger.
 type Kind struct{}
 
-type ExecOpts struct {
-	Args []string `doc:"arguments to pass to the kind command"`
-}
-
 // Cli returns a container with the kind binary installed.
-func (m *Kind) Cli(ctx context.Context, opts ExecOpts) *Container {
+func (m *Kind) Cli(_ context.Context) *Container {
 	return container()
 }
 
