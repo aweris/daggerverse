@@ -1,8 +1,0 @@
-query create { kind { cluster (name: "kind-with-dagger") { create } } }
-
-query logs { kind { cluster (name: "kind-with-dagger") { logs { export(path: "./export/logs")} } } }
-
-query kubeconfig { kind { cluster (name: "kind-with-dagger") { kubeconfig (internal: false) { export(path: "./export/kubeconfig")} } } }
-
-query delete { kind { cluster (name: "kind-with-dagger") { delete } } }
-
