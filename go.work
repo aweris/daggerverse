@@ -1,7 +1,6 @@
 go 1.21
 
 use (
-	1password
 	docker
 	gh
 	helm
