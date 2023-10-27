@@ -8,47 +8,79 @@ import (
 	"time"
 )
 
-// Kind represents the KinD module for Dagger.
+const (
+	DefaultClusterName = "kind"
+	DefaultDockerHost  = "unix:///var/run/docker.sock"
+)
+
+// Kind represents the KinD module for Dagger.type
 type Kind struct{}
 
-// KindClusterOpts represents the options for the KindCluster function.
-type KindClusterOpts struct {
-	Name string `doc:"name of the cluster" default:"kind"`
-}
-
-// DockerOpts represents the options for the connecting docker instance of the host.
-type DockerOpts struct {
-	DockerHost string `doc:"docker host" default:"unix:///var/run/docker.sock"`
-}
-
 // Cli returns a container with the kind binary installed.
-func (m *Kind) Cli(ctx context.Context, opts DockerOpts) (*Container, error) {
+func (m *Kind) Cli(
+	ctx context.Context,
+	// docker host (default: unix:///var/run/docker.sock)
+	dockerHost Optional[string],
+) (*Container, error) {
+	dockerHostVal := dockerHost.GetOr(DefaultDockerHost)
+
 	// Get the network name for the engine containers to ensure the cluster is created on the same network. It's
 	// important to use the same network to be able to access the cluster from other containers using the IP address of
 	// the cluster.
-	network, err := getContainersNetwork(ctx, "^dagger-engine-*", opts.DockerHost)
+	network, err := getContainersNetwork(ctx, "^dagger-engine-*", dockerHostVal)
 	if err != nil {
 		return nil, err
 	}
 
-	return container(opts.DockerHost).WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network), nil
+	return container(dockerHostVal).WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network), nil
 }
 
 // Connect returns a container with the kubeconfig file mounted to be able to access the given cluster. If the cluster
 // doesn't exist, it returns an error.
-func (m *Kind) Connect(ctx context.Context, opts KindClusterOpts, dockerOpts DockerOpts) (*Container, error) {
-	cluster, err := m.Cluster(ctx, opts, dockerOpts)
+func (m *Kind) Connect(
+	ctx context.Context,
+	// name of the cluster
+	name Optional[string],
+	// docker host (default: unix:///var/run/docker.sock)
+	dockerHost Optional[string],
+) (*Container, error) {
+	dockerHostVal := dockerHost.GetOr(DefaultDockerHost)
+
+	cluster, err := m.Cluster(ctx, name, dockerHost)
 	if err != nil {
 		return nil, err
 	}
 
-	return container(dockerOpts.DockerHost).withKubeConfig(ctx, cluster)
+	if !cluster.Exists {
+		return nil, fmt.Errorf("cluster %s doesn't exist", cluster.Name)
+	}
+
+	kubeconfig, err := cluster.Kubeconfig(ctx, Opt[bool](true))
+	if err != nil {
+		return nil, err
+	}
+
+	return container(dockerHostVal).
+		WithMountedFile("/root/.kube/config", kubeconfig).
+		WithEnvVariable("KUBECONFIG", "/root/.kube/config"), nil
 }
 
 // Cluster returns the cluster with the given name. If no name is given, the default name, kind, is used. If a cluster
 // already exists with the given name, it marks the cluster as existing to avoid creating it again.
-func (m *Kind) Cluster(ctx context.Context, opts KindClusterOpts, dockerOpts DockerOpts) (*Cluster, error) {
-	clusters, err := container(dockerOpts.DockerHost).kind([]string{"get", "clusters"}).Stdout(ctx)
+func (m *Kind) Cluster(
+	ctx context.Context,
+	// name of the cluster
+	name Optional[string],
+	// docker host (default: unix:///var/run/docker.sock)
+	dockerHost Optional[string],
+) (*Cluster, error) {
+
+	var (
+		clusterName   = name.GetOr(DefaultClusterName)
+		dockerHostVal = dockerHost.GetOr(DefaultDockerHost)
+	)
+
+	clusters, err := kind(container(dockerHostVal), []string{"get", "clusters"}).Stdout(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +88,9 @@ func (m *Kind) Cluster(ctx context.Context, opts KindClusterOpts, dockerOpts Doc
 	exist := false
 
 	for _, cluster := range strings.Split(clusters, "\n") {
-		if cluster == opts.Name {
-			fmt.Printf("Cluster %s already exists.\n", opts.Name)
+		println(cluster)
+		if cluster == clusterName {
+			fmt.Printf("Cluster %s already exists.\n", clusterName)
 			exist = true
 			break
 		}
@@ -66,12 +99,12 @@ func (m *Kind) Cluster(ctx context.Context, opts KindClusterOpts, dockerOpts Doc
 	network := ""
 
 	if exist {
-		network, err = getContainersNetwork(ctx, fmt.Sprintf("^%s-control-plane-*", opts.Name), dockerOpts.DockerHost)
+		network, err = getContainersNetwork(ctx, fmt.Sprintf("^%s-control-plane-*", clusterName), dockerHostVal)
 		if err != nil {
 			return nil, err
 		}
 
-		engineNetwork, err := getContainersNetwork(ctx, "^dagger-engine-*", dockerOpts.DockerHost)
+		engineNetwork, err := getContainersNetwork(ctx, "^dagger-engine-*", dockerHostVal)
 		if err != nil {
 			return nil, err
 		}
@@ -81,15 +114,15 @@ func (m *Kind) Cluster(ctx context.Context, opts KindClusterOpts, dockerOpts Doc
 		// the cluster. If the cluster is not on the same network, the IP address of the cluster won't be accessible
 		// from other containers.
 		if network != engineNetwork {
-			return nil, fmt.Errorf("cluster %s is already created on a different network. Please delete the cluster and try again", opts.Name)
+			return nil, fmt.Errorf("cluster %s is already created on a different network. Please delete the cluster and try again", clusterName)
 		}
 	}
 
 	return &Cluster{
-		Name:       opts.Name,
+		Name:       clusterName,
 		Network:    network,
 		Exists:     exist,
-		DockerHost: dockerOpts.DockerHost,
+		DockerHost: dockerHostVal,
 	}, nil
 }
 
@@ -115,9 +148,9 @@ func (m *Cluster) Create(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	_, err = container(m.DockerHost).
-		WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network).
-		kind([]string{"create", "cluster", "--name", m.Name}).Sync(ctx)
+	container := container(m.DockerHost).WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network)
+
+	_, err = kind(container, []string{"create", "cluster", "--name", m.Name}).Sync(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -128,24 +161,24 @@ func (m *Cluster) Create(ctx context.Context) (string, error) {
 	return fmt.Sprintf("cluster %s created", m.Name), nil
 }
 
-// KubeConfigOpts represents the options for the Kubeconfig function.
-type KubeConfigOpts struct {
-	Internal bool `doc:"use the internal address of the cluster to access it. This is useful to access the cluster from other containers" default:"false"`
-}
-
 // Kubeconfig returns the kubeconfig file for the cluster. If internal is true, the internal address is used. Otherwise,
 // the external address is used in the kubeconfig. Internal config is useful for running kubectl commands from within
 // other containers.
-func (m *Cluster) Kubeconfig(ctx context.Context, opts KubeConfigOpts) (*File, error) {
+func (m *Cluster) Kubeconfig(
+	ctx context.Context,
+	// internal is true if the internal address should be used in the kubeconfig.
+	internal Optional[bool],
+) (*File, error) {
+	internalVal := internal.GetOr(false)
 	cmd := []string{"export", "kubeconfig", "--name", m.Name}
 
-	if opts.Internal {
+	if internalVal {
 		cmd = append(cmd, "--internal")
 	}
 
-	file := container(m.DockerHost).kind(cmd).Directory("/root/.kube").File("config")
+	file := kind(container(m.DockerHost), cmd).Directory("/root/.kube").File("config")
 
-	if opts.Internal {
+	if internalVal {
 		ip, err := getClusterIPAddress(ctx, m.Network, m.Name, m.DockerHost)
 		if err != nil {
 			return nil, err
@@ -168,7 +201,7 @@ func (m *Cluster) Kubeconfig(ctx context.Context, opts KubeConfigOpts) (*File, e
 func (m *Cluster) Logs(_ context.Context) *Directory {
 	dir := filepath.Join("tmp", m.Name, "logs")
 
-	return container(m.DockerHost).kind([]string{"export", "logs", dir, "--name", m.Name}).Directory(dir)
+	return kind(container(m.DockerHost), []string{"export", "logs", dir, "--name", m.Name}).Directory(dir)
 }
 
 // Delete deletes the cluster if it exists.
@@ -177,7 +210,7 @@ func (m *Cluster) Delete(ctx context.Context) (string, error) {
 		return fmt.Sprintf("cluster %s doesn't exist", m.Name), nil
 	}
 
-	_, err := container(m.DockerHost).kind([]string{"delete", "cluster", "--name", m.Name}).Sync(ctx)
+	_, err := kind(container(m.DockerHost), []string{"delete", "cluster", "--name", m.Name}).Sync(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -189,23 +222,8 @@ func (m *Cluster) Delete(ctx context.Context) (string, error) {
 }
 
 // exec executes the kind command with the given arguments.
-func (c *Container) kind(args []string) *Container {
+func kind(c *Container, args []string) *Container {
 	return c.WithExec(append([]string{"kind"}, args...), ContainerWithExecOpts{ExperimentalPrivilegedNesting: true})
-}
-
-// withKubeConfig returns a container with the kubeconfig file mounted to be able to access the given cluster. If the
-// cluster doesn't exist, it returns an error.
-func (c *Container) withKubeConfig(ctx context.Context, cluster *Cluster) (*Container, error) {
-	if !cluster.Exists {
-		return nil, fmt.Errorf("cluster %s doesn't exist", cluster.Name)
-	}
-
-	kubeconfig, err := cluster.Kubeconfig(ctx, KubeConfigOpts{Internal: true})
-	if err != nil {
-		return nil, err
-	}
-
-	return c.WithMountedFile("/root/.kube/config", kubeconfig).WithEnvVariable("KUBECONFIG", "/root/.kube/config"), nil
 }
 
 // container returns a container with the docker and kind binaries installed and the docker socket mounted. As last
@@ -218,7 +236,6 @@ func container(dockerHost string) *Container {
 		WithWorkdir("/").
 		WithExec([]string{"apk", "add", "--no-cache", "docker", "kind", "k9s"})
 
-	// TODO: validate this works, for custom socket and hosts this could fail
 	if dockerHost != "" {
 		switch {
 		case strings.HasPrefix(dockerHost, "unix://"):
