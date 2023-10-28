@@ -1,6 +1,10 @@
 # Dagger Helm Module
 
+![dagger-version](https://img.shields.io/badge/dagger%20version-v0.9.0-green)
+
 Execute Helm commands with Dagger.
+
+**Note:** This module is experimental and please use it with caution.
 
 ## Examples
 

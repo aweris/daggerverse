@@ -1,6 +1,10 @@
 # Dagger Kubectl Module
 
+![dagger-version](https://img.shields.io/badge/dagger%20version-v0.9.0-green)
+
 Run kubectl commands using Dagger.
+
+**Note:** This module is experimental and please use it with caution.
 
 ## Examples
 
