@@ -1,6 +1,6 @@
 # Dagger Docker Module
 
-![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.9.1-green)
+![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.9.2-green)
 
 Docker module provides DinD using Dagger.
 
@@ -8,7 +8,7 @@ Docker module provides DinD using Dagger.
 
 ## Prerequisites
 
-- Module requires Dagger CLI version `v0.9.1` or higher.
+- Module requires Dagger CLI version `v0.9.2` or higher.
 
 ## Before you start
 
