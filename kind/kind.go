@@ -150,7 +150,13 @@ func (m *Cluster) Create(ctx context.Context) (string, error) {
 
 	container := container(m.DockerHost).WithEnvVariable("KIND_EXPERIMENTAL_DOCKER_NETWORK", network)
 
-	_, err = kind(container, []string{"create", "cluster", "--name", m.Name}).Sync(ctx)
+	args := []string{"create", "cluster"}
+
+	if m.Name != DefaultClusterName {
+		args = append(args, "--name", m.Name)
+	}
+
+	_, err = kind(container, args).Sync(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -170,7 +176,12 @@ func (m *Cluster) Kubeconfig(
 	internal Optional[bool],
 ) (*File, error) {
 	internalVal := internal.GetOr(false)
-	cmd := []string{"export", "kubeconfig", "--name", m.Name}
+
+	cmd := []string{"export", "kubeconfig"}
+
+	if m.Name != DefaultClusterName {
+		cmd = append(cmd, "--name", m.Name)
+	}
 
 	if internalVal {
 		cmd = append(cmd, "--internal")
@@ -201,7 +212,13 @@ func (m *Cluster) Kubeconfig(
 func (m *Cluster) Logs(_ context.Context) *Directory {
 	dir := filepath.Join("tmp", m.Name, "logs")
 
-	return kind(container(m.DockerHost), []string{"export", "logs", dir, "--name", m.Name}).Directory(dir)
+	args := []string{"export", "logs", dir}
+
+	if m.Name != DefaultClusterName {
+		args = append(args, "--name", m.Name)
+	}
+
+	return kind(container(m.DockerHost), args).Directory(dir)
 }
 
 // Delete deletes the cluster if it exists.
@@ -210,7 +227,13 @@ func (m *Cluster) Delete(ctx context.Context) (string, error) {
 		return fmt.Sprintf("cluster %s doesn't exist", m.Name), nil
 	}
 
-	_, err := kind(container(m.DockerHost), []string{"delete", "cluster", "--name", m.Name}).Sync(ctx)
+	args := []string{"delete", "cluster"}
+
+	if m.Name != DefaultClusterName {
+		args = append(args, "--name", m.Name)
+	}
+
+	_, err := kind(container(m.DockerHost), args).Sync(ctx)
 	if err != nil {
 		return "", err
 	}
