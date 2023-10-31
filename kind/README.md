@@ -1,12 +1,12 @@
 # Dagger KinD Module
 
-![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.9.1-green)
+![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.9.2-green)
 
 Easily manage KinD clusters through Dagger.
 
 ## Prerequisites
 
-- KinD module requires Dagger CLI version `v0.9.1` or higher.
+- KinD module requires Dagger CLI version `v0.9.2` or higher.
 
 ## Before you start
 
