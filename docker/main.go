@@ -3,13 +3,17 @@ package main
 import "context"
 
 // Docker represents the Docker module for Dagger.
-type Docker struct{}
+type Docker struct {
+	CacheVolume *CacheVolume
+}
+
+// WithCacheVolume sets the cache volume for the Docker module.
+func (m *Docker) WithCacheVolume(key string) {
+	m.CacheVolume = dag.CacheVolume(key)
+}
 
 // Dind returns docker:dind as a service.
-func (m *Docker) Dind(
-	// The cache volume name to use for caching the Docker data. If not provided, the data is not cached.
-	cacheVolumeName Optional[string],
-) *Service {
+func (m *Docker) Dind() *Service {
 	dind := dag.Container().
 		From("docker:dind").
 		WithUser("root").
@@ -18,8 +22,8 @@ func (m *Docker) Dind(
 		WithExposedPort(2375)
 
 	// If a cache volume is provided, we'll mount it /var/lib/docker.
-	if cache, ok := cacheVolumeName.Get(); ok {
-		dind = dind.WithMountedCache("/var/lib/docker", dag.CacheVolume(cache), ContainerWithMountedCacheOpts{Sharing: Shared})
+	if m.CacheVolume != nil {
+		dind = dind.WithMountedCache("/var/lib/docker", m.CacheVolume, ContainerWithMountedCacheOpts{Sharing: Shared})
 	}
 
 	return dind.AsService()
@@ -30,11 +34,9 @@ func (m *Docker) BindAsService(
 	ctx context.Context,
 	// container to bind the docker service to
 	container *Container,
-	// The cache volume name to use for caching the Docker data. If not provided, the data is not cached.
-	cacheVolumeName Optional[string],
 ) (*Container, error) {
 	// convert the container to a service.
-	service := m.Dind(cacheVolumeName)
+	service := m.Dind()
 
 	// get the endpoint of the service to set the DOCKER_HOST environment variable. The reason we're not using the
 	// alias for docker is because the service alias is not available in the child containers of the container.
