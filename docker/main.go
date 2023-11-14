@@ -8,8 +8,9 @@ type Docker struct {
 }
 
 // WithCacheVolume sets the cache volume for the Docker module.
-func (m *Docker) WithCacheVolume(key string) {
+func (m *Docker) WithCacheVolume(key string) *Docker {
 	m.CacheVolume = dag.CacheVolume(key)
+	return m
 }
 
 // Dind returns docker:dind as a service.
