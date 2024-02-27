@@ -5,12 +5,6 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-
-	"github.com/hashicorp/go-getter"
-)
-
-const (
-	DefaultCLIVersion = "v2.37.0"
 )
 
 // Gh is Github CLI module for Dagger
@@ -18,17 +12,16 @@ type Gh struct{}
 
 func (m *Gh) Run(
 	ctx context.Context,
-	// version of the Github CLI (default: v2.37.0)
-	version Optional[string],
 	// Github token
 	token *Secret,
 	// command to run
 	cmd string,
+	// version of the Github CLI
+	// +optional
+	// +default="2.37.0"
+	version string,
 ) (string, error) {
-	file, err := m.Get(ctx, version)
-	if err != nil {
-		return "", err
-	}
+	file := m.Get(ctx, version)
 
 	return dag.Container().
 		From("alpine/git:latest").
@@ -41,31 +34,23 @@ func (m *Gh) Run(
 // Get returns the Github CLI binary
 func (m *Gh) Get(
 	ctx context.Context,
-	// version of the Github CLI (default: v2.37.0)
-	version Optional[string],
-) (*File, error) {
+	// version of the Github CLI
+	// +optional
+	// +default="2.37.0"
+	version string,
+) *File {
 	var (
 		goos       = runtime.GOOS
 		goarch     = runtime.GOARCH
-		versionNum = strings.TrimPrefix(version.GetOr(DefaultCLIVersion), "v")
+		versionNum = version
 	)
 
 	src := fmt.Sprintf("https://github.com/cli/cli/releases/download/v%s/gh_%s_%s_%s.tar.gz", versionNum, versionNum, goos, goarch)
-	dst := fmt.Sprintf("/tmp/gh_%s_%s_%s", versionNum, goos, goarch)
+	dst := fmt.Sprintf("gh_%s_%s_%s", versionNum, goos, goarch)
 
-	client := getter.Client{
-		Ctx:  ctx,
-		Src:  src,
-		Dst:  "/tmp",
-		Mode: getter.ClientModeDir,
-	}
-
-	err := client.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	dir := dag.Host().Directory(dst)
-
-	return dir.File("bin/gh"), nil
+	return dag.Container().From("alpine").
+		WithMountedFile("/tmp/gh.tar.gz", dag.HTTP(src)).
+		WithWorkdir("/tmp").
+		WithExec([]string{"tar", "xvf", "gh.tar.gz"}).
+		File(fmt.Sprintf("%s/bin/gh", dst))
 }
