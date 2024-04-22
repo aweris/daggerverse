@@ -23,7 +23,7 @@ func (m *Gh) Run(
 	// disable cache
 	// +optional
 	// +default=false
-	disableCache bool
+	disableCache bool,
 ) (string, error) {
 	file := m.Get(ctx, version)
 
