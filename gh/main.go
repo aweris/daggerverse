@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // Gh is Github CLI module for Dagger
