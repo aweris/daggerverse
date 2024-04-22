@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // Gh is Github CLI module for Dagger
@@ -20,14 +21,23 @@ func (m *Gh) Run(
 	// +optional
 	// +default="2.37.0"
 	version string,
+	// disable cache
+	// +optional
+	// +default=false
+	disableCache bool,
 ) (string, error) {
 	file := m.Get(ctx, version)
 
-	return dag.Container().
+	ctr := dag.Container().
 		From("alpine/git:latest").
 		WithFile("/usr/local/bin/gh", file).
-		WithSecretVariable("GITHUB_TOKEN", token).
-		WithExec([]string{"sh", "-c", strings.Join([]string{"/usr/local/bin/gh", cmd}, " ")}, ContainerWithExecOpts{SkipEntrypoint: true}).
+		WithSecretVariable("GITHUB_TOKEN", token)
+	
+	if (disableCache) {
+		ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().String())
+	}
+
+	return ctr.WithExec([]string{"sh", "-c", strings.Join([]string{"/usr/local/bin/gh", cmd}, " ")}, ContainerWithExecOpts{SkipEntrypoint: true}).
 		Stdout(ctx)
 }
 
