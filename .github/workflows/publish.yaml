@@ -1,0 +1,36 @@
+name: publish
+
+on:
+  push:
+    tags: ["**/v[0-9]+.[0-9]+.[0-9]+"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract module name and version
+        id: extract
+        run: |
+          echo "::set-output name=module::$(echo $GITHUB_REF | cut -d / -f 3)"
+          echo "::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 4)"
+
+      - name: Fail if module name is empty
+        run: |
+          if [ -z "${{ steps.extract.outputs.module }}" ]; then
+            echo "Module name is empty"
+            exit 1
+          fi
+
+      - name: Fail if version is empty
+        run: |
+          if [ -z "${{ steps.extract.outputs.version }}" ]; then
+            echo "Version is empty"
+            exit 1
+          fi
+
+      - name: Publish module with tagged version
+        uses: dagger/dagger-for-github@eba69b4dddb54eddfdb51a88eb7fd86957137630 # v5.4.0
+        with:
+          verb: publish
+          module: github.com/${{ github.repository }}/${{ steps.extract.outputs.module }}@${{ steps.extract.outputs.version }}
+          version: "0.11.2"
