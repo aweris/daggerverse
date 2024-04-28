@@ -14,8 +14,8 @@ jobs:
       - name: Extract module name and version
         id: extract
         run: |
-          echo "::set-output name=module::$(echo $GITHUB_REF | cut -d / -f 3)"
-          echo "::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 4)"
+          echo "module=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+          echo "version=$(echo $GITHUB_REF | cut -d / -f 4)" >> $GITHUB_OUTPUT
 
       - name: Fail if module name is empty
         run: |
