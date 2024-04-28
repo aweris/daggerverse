@@ -2,14 +2,30 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"runtime"
 	"strings"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 // Gh is Github CLI module for Dagger
-type Gh struct{}
+type Gh struct {
+	// Configuration for the Github CLI binary
+	// +private
+	Binary GHBinary
+}
+
+func New(
+	// version of the Github CLI
+	// +optional
+	version string,
+) *Gh {
+	return &Gh{
+		Binary: GHBinary{
+			Version: version,
+		},
+	}
+}
 
 func (m *Gh) Run(
 	ctx context.Context,
@@ -26,14 +42,17 @@ func (m *Gh) Run(
 	// +default=false
 	disableCache bool,
 ) (string, error) {
-	file := m.Get(ctx, version)
+	file, err := lo.Ternary(version != "", m.Binary.WithVersion(version), m.Binary).binary(ctx)
+	if err != nil {
+		return "", err
+	}
 
 	ctr := dag.Container().
 		From("alpine/git:latest").
 		WithFile("/usr/local/bin/gh", file).
 		WithSecretVariable("GITHUB_TOKEN", token)
-	
-	if (disableCache) {
+
+	if disableCache {
 		ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().String())
 	}
 
@@ -44,23 +63,18 @@ func (m *Gh) Run(
 // Get returns the Github CLI binary
 func (m *Gh) Get(
 	ctx context.Context,
+	// operating system of the binary
+	// +optional
+	goos string,
+	// architecture of the binary
+	// +optional
+	goarch string,
 	// version of the Github CLI
 	// +optional
-	// +default="2.37.0"
 	version string,
-) *File {
-	var (
-		goos       = runtime.GOOS
-		goarch     = runtime.GOARCH
-		versionNum = version
-	)
-
-	src := fmt.Sprintf("https://github.com/cli/cli/releases/download/v%s/gh_%s_%s_%s.tar.gz", versionNum, versionNum, goos, goarch)
-	dst := fmt.Sprintf("gh_%s_%s_%s", versionNum, goos, goarch)
-
-	return dag.Container().From("alpine").
-		WithMountedFile("/tmp/gh.tar.gz", dag.HTTP(src)).
-		WithWorkdir("/tmp").
-		WithExec([]string{"tar", "xvf", "gh.tar.gz"}).
-		File(fmt.Sprintf("%s/bin/gh", dst))
+) (*File, error) {
+	return lo.Ternary(version != "", m.Binary.WithVersion(version), m.Binary).
+		WithOS(goos).
+		WithArch(goarch).
+		binary(ctx)
 }
