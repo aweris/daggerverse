@@ -1,9 +1,6 @@
-go 1.21
+go 1.22.2
 
 use (
+	./docker
 	./gh
-	docker
-	helm
-	kind
-	kubectl
 )
