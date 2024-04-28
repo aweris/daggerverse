@@ -1,9 +1,9 @@
 go 1.21
 
 use (
+	./docker
 	./gh
-	docker
-	helm
-	kind
-	kubectl
+	./helm
+	./kind
+	./kubectl
 )
