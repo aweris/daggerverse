@@ -1,6 +1,6 @@
 # Dagger GH module
 
-![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.9.2-green)
+![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.11.2-green)
 
 Dagger module for GitHub CLI.
 
@@ -8,7 +8,7 @@ Dagger module for GitHub CLI.
 
 ## Prerequisites
 
-- KinD module requires Dagger CLI version `v0.9.2` or higher.
+- KinD module requires Dagger CLI version `v0.11.2` or higher.
 
 ## Before you start
 
@@ -23,13 +23,13 @@ export DAGGER_MODULE=github.com/aweris/daggerverse/gh
 ### Get Github CLI Binary
 
 ```shell
-dagger download gh --version vx.y.z --export-path ./gh
+dagger call get --version vx.y.z --output ./gh
 ```
 
 ### Running Github CLI
 
 ```shell
-dagger run gh --version vx.y.z --token <token> --cmd "search repos --followers 1 --json url"
+dagger call run --version vx.y.z --token env:GITHUB_TOKEN --cmd "search repos --followers 1 --json url"
 ```
 
 ## Flags
