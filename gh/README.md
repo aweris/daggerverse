@@ -6,3 +6,6 @@
 
 **Note:** This module is experimental and please use it with caution.
 
+## Credits
+
+- Improvement ideas inspired by [this module](https://github.com/sagikazarmark/daggerverse/tree/main/gh) by [Mark Sagi-Kazar](https://github.com/sagikazarmark)
