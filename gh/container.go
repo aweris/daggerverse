@@ -41,8 +41,14 @@ func (c GHContainer) container(binary *File) *Container {
 		WithEnvVariable("GH_PROMPT_DISABLED", "true").
 		WithEnvVariable("GH_NO_UPDATE_NOTIFIER", "true").
 		With(func(ctr *Container) *Container {
-			ctr = lo.Ternary(c.Token != nil, ctr.WithSecretVariable("GITHUB_TOKEN", c.Token), ctr)
-			ctr = lo.Ternary(c.Repo != "", ctr.WithEnvVariable("GH_REPO", c.Repo), ctr)
+			if c.Token != nil {
+				ctr = ctr.WithSecretVariable("GH_TOKEN", c.Token)
+			}
+
+			if c.Repo != "" {
+				ctr = ctr.WithEnvVariable("GH_REPO", c.Repo)
+			}
+
 			return ctr
 		})
 }
