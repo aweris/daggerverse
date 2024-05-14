@@ -1,6 +1,6 @@
 # Dagger GH module
 
-![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.11.2-green)
+![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.11.4-green)
 
 [Dagger module](https://daggerverse.dev/mod/github.com/aweris/daggerverse/gh) for GitHub CLI.
 
