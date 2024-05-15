@@ -16,7 +16,7 @@ type Gh struct {
 
 	// Configuration for the Github CLI container
 	// +private
-	Container GHContainer
+	GHContainer GHContainer
 }
 
 func New(
@@ -40,12 +40,45 @@ func New(
 		Binary: GHBinary{
 			Version: version,
 		},
-		Container: GHContainer{
+		GHContainer: GHContainer{
 			Base:  base,
 			Token: token,
 			Repo:  repo,
 		},
 	}
+}
+
+func (m *Gh) Container(
+	ctx context.Context,
+
+	// GitHub CLI version. (default: latest version)
+	// +optional
+	version string,
+
+	// GitHub token.
+	// +optional
+	token *Secret,
+
+	// GitHub repository (e.g. "owner/repo").
+	// +optional
+	repo string,
+) (*Container, error) {
+	file, err := lo.Ternary(version != "", m.Binary.WithVersion(version), m.Binary).binary(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the github container configuration
+	gc := m.GHContainer
+
+	// update the container with the given token and repository if provided
+	gc = lo.Ternary(token != nil, gc.WithToken(token), gc)
+	gc = lo.Ternary(repo != "", gc.WithRepo(repo), gc)
+
+	// get the container object with the given binary
+	ctr := gc.container(file)
+
+	return ctr, nil
 }
 
 // Run a GitHub CLI command (accepts a single command string without "gh").
@@ -72,22 +105,12 @@ func (m *Gh) Run(
 	// +default=false
 	disableCache bool,
 ) (*Container, error) {
-	file, err := lo.Ternary(version != "", m.Binary.WithVersion(version), m.Binary).binary(ctx)
+	ctr, err := m.Container(ctx, version, token, repo)
 	if err != nil {
 		return nil, err
 	}
 
-	// get the github container configuration
-	gc := m.Container
-
-	// update the container with the given token and repository if provided
-	gc = lo.Ternary(token != nil, gc.WithToken(token), gc)
-	gc = lo.Ternary(repo != "", gc.WithRepo(repo), gc)
-
-	// get the container object with the given binary
-	ctr := gc.container(file)
-
-	// disable cache if flag is set
+	// disable cache if requested
 	ctr = lo.Ternary(disableCache, ctr.WithEnvVariable("CACHE_BUSTER", time.Now().String()), ctr)
 
 	// run the command and return the container
