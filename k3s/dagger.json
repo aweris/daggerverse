@@ -1,0 +1,6 @@
+{
+  "name": "k3s",
+  "sdk": "go",
+  "source": ".",
+  "engineVersion": "v0.11.9"
+}
