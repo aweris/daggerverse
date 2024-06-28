@@ -108,7 +108,6 @@ func (m *K3S) k3sServer(ctr *Container) *Container {
 	// k3s server -- options
 	opts := []string{"k3s", "server"}
 
-	opts = append(opts, "--bind-address", "$(ip route | grep src | awk '{print $NF}')")
 	opts = append(opts, "--https-listen-port", fmt.Sprintf("%d", m.HttpListenPort))
 	opts = append(opts, "--disable", "traefik")
 	opts = append(opts, "--disable", "metrics-server")
