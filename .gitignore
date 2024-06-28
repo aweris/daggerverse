@@ -3,6 +3,7 @@
 
 # IDE
 .idea/
+.zed/
 
 # Local temorary files
 .gale/
