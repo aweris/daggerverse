@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"dagger/k-3-s/internal/dagger"
 )
@@ -67,6 +68,29 @@ func (m *K3S) Server() *Service {
 	return m.Container().With(m.k3sServer).AsService()
 }
 
+// Returns the kubeconfig file from the k3s container
+func (m *K3S) Kubeconfig(
+	// Indicates that the kubeconfig should be use localhost instead of the container IP. This is useful when running k3s as service
+	//
+	// +optional
+	// +default=false
+	local bool,
+) *File {
+	return dag.Container().
+		From("alpine").
+		With(m.cachebuster). // cache buster to force the copy of the k3s.yaml
+		WithMountedCache("/cache/k3s", m.Cache).
+		WithExec([]string{"cp", "/cache/k3s/k3s.yaml", "k3s.yaml"}).
+		With(func(ctr *Container) *Container {
+			if !local {
+				return ctr
+			}
+
+			return ctr.WithExec([]string{"sed", "-i", `s/https:.*:/https:\/\/localhost:/g`, "k3s.yaml"})
+		}).
+		File("k3s.yaml")
+}
+
 // Helper functions used to configure the k3s container
 
 // a helper function to add the entrypoint to the container
@@ -90,4 +114,10 @@ func (m *K3S) k3sServer(ctr *Container) *Container {
 	opts = append(opts, "--disable", "metrics-server")
 
 	return ctr.WithExec([]string{"sh", "-c", strings.Join(opts, " ")}, ContainerWithExecOpts{InsecureRootCapabilities: true})
+}
+
+// helper function to add a cache buster to the container. This will force
+// the container execute follow-up steps instead of using the cache
+func (_ *K3S) cachebuster(ctr *Container) *Container {
+	return ctr.WithEnvVariable("CACHE_BUSTER", time.Now().String())
 }
