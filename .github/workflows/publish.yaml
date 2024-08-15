@@ -32,7 +32,7 @@ jobs:
           fi
 
       - name: Publish module with tagged version
-        uses: dagger/dagger-for-github@fbdf21fc13e898ec99d47d312ded6fa4bda3691d # v6.2.0
+        uses: dagger/dagger-for-github@145f04c8b5d7a638e3f0fd68fa6329bb2eebc385 # v6.5.0
         with:
           workdir: ${{ steps.extract.outputs.module }}
           verb: publish
