@@ -7,24 +7,37 @@ import (
 	"dagger/kind/internal/dagger"
 )
 
+const defaultImage = "alpine/k8s:1.32.1"
+
 func New(
 	// Unix socket to connect to the external Docker Engine. Please carefully use this option it can expose your host to the container.
 	//
 	// +required
 	socket *dagger.Socket,
+	// +optional
+	containerImage string,
+	// +optional
+	kindImage string,
 ) *Kind {
-	return &Kind{DockerSocket: socket}
+	if containerImage == "" {
+		containerImage = defaultImage
+	}
+	return &Kind{DockerSocket: socket, ContainerImage: containerImage, KindImage: kindImage}
 }
 
 type Kind struct {
 	// +private
 	DockerSocket *dagger.Socket
+	// +private
+	ContainerImage string
+	// +private
+	KindImage string
 }
 
 // Container that contains the kind and k9s binaries
 func (k *Kind) Container() *dagger.Container {
 	return dag.Container().
-		From("alpine/k8s:1.28.3").
+		From(k.ContainerImage).
 		WithoutEntrypoint().
 		WithUser("root").
 		WithWorkdir("/").
@@ -51,5 +64,5 @@ func (k *Kind) Cluster(
 		return nil, err
 	}
 
-	return &Cluster{Name: name, Network: network, Kind: k}, nil
+	return &Cluster{Name: name, Network: network, KindImageImageImage: k, KindImage: k.KindImage}, nil
 }
