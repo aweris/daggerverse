@@ -64,5 +64,5 @@ func (k *Kind) Cluster(
 		return nil, err
 	}
 
-	return &Cluster{Name: name, Network: network, KindImageImageImage: k, KindImage: k.KindImage}, nil
+	return &Cluster{Name: name, Network: network, Kind: k, KindImage: k.KindImage}, nil
 }
