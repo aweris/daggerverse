@@ -13,7 +13,7 @@ import (
 func getContainerNetwork(ctx context.Context, socket *dagger.Socket, name string) (string, error) {
 	return dag.Docker().
 		Cli(dagger.DockerCliOpts{Socket: socket}).
-		Run(ctx, []string{"container", "ls", "--filter", fmt.Sprintf(`name="%s"`, name), "--format", "{{.Networks}}", "-n", "1"})
+		Run(ctx, []string{"container", "ls", "--filter", fmt.Sprintf("name=%s", name), "--format", "{{.Networks}}", "-n", "1"})
 }
 
 func exec(ctx context.Context, ctr *dagger.Container, kindNetwork string, args ...string) (*dagger.Container, error) {

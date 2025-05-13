@@ -50,7 +50,7 @@ func (c *Cluster) Create(ctx context.Context) (string, error) {
 	}
 
 	if exist {
-		currentNetwork, err := getContainerNetwork(ctx, c.Kind.DockerSocket, fmt.Sprintf("^%s-control-plane-*", c.Name))
+		currentNetwork, err := getContainerNetwork(ctx, c.Kind.DockerSocket, fmt.Sprintf("^%s-control-plane-.*", c.Name))
 		if err != nil {
 			return "", err
 		}

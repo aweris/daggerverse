@@ -59,7 +59,7 @@ func (k *Kind) Cluster(
 	// Get the network name for the engine containers to ensure the cluster is created on the same network. It's
 	// important to use the same network to be able to access the cluster from other containers using the IP address of
 	// the cluster.
-	network, err := getContainerNetwork(ctx, k.DockerSocket, "^dagger-engine-*")
+	network, err := getContainerNetwork(ctx, k.DockerSocket, "^dagger-engine-.*")
 	if err != nil {
 		return nil, err
 	}
