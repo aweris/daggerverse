@@ -19,6 +19,10 @@ type Cluster struct {
 	// Network name of the cluster. This should be the same as the network name of the dagger-engine containers
 	Network string
 
+	// KindImage to use for the cluster
+	// If not provided, the default image is used
+	KindImage string
+
 	// +private
 	Kind *Kind
 }
@@ -46,7 +50,7 @@ func (c *Cluster) Create(ctx context.Context) (string, error) {
 	}
 
 	if exist {
-		currentNetwork, err := getContainerNetwork(ctx, c.Kind.DockerSocket, fmt.Sprintf("^%s-control-plane-*", c.Name))
+		currentNetwork, err := getContainerNetwork(ctx, c.Kind.DockerSocket, fmt.Sprintf("^%s-control-plane-.*", c.Name))
 		if err != nil {
 			return "", err
 		}
@@ -62,6 +66,10 @@ func (c *Cluster) Create(ctx context.Context) (string, error) {
 	}
 
 	cmd := []string{"kind", "create", "cluster"}
+
+	if c.KindImage != "" {
+		cmd = append(cmd, "--image", c.KindImage)
+	}
 
 	_, err = exec(ctx, c.Container(), c.Network, cmd...)
 	if err != nil {
